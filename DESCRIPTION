@@ -1,0 +1,10 @@
+Package: RFPCA
+Title: Sparse and Dense Riemannian FPCA
+Version: 0.0.0.9001
+Authors@R: person("Xiongtao", "Dai", email = "xdai@iastate.edu", role = c("aut", "cre"))
+Description: Performs Sparse and Dense Riemannian FPCA
+Depends: R (>= 3.2.1), fdapace, expm, Matrix
+License: MIT + License
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.0
