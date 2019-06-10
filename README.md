@@ -14,7 +14,9 @@ Riemannian functional principal component analysis methods. C.f.
 
 To install `RFPCA` from GitHub
 
-# `{r} # devtools::install_github('CrossD/RFPCA') #`
+``` r
+devtools::install_github('CrossD/RFPCA')
+```
 
 ## Example on a sphere
 
@@ -70,7 +72,7 @@ matplot(pts, t(mu), type='l', lty=1)
 matplot(pts, t(resSp$muObs), type='l', lty=2, add=TRUE)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 Plot the principal components; up to 3 were
 well-estimated
@@ -79,4 +81,4 @@ well-estimated
 plot(resSp$xi[, 3], samp$xi[, 3], xlab='estimated xi_3', ylab='true xi_3') 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
