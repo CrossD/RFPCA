@@ -1,5 +1,5 @@
 ---
-title: "Riemannian Functional Principal Component analysis"
+title: "Riemannian Functional Principal Component Analysis"
 output: github_document
 ---
 
@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 This is the R package `RFPCA` implementing the sparse and dense Riemannian functional principal component analysis methods. C.f.
 
 - Dai, X., & Müller, H. G. (2018). Principal component analysis for functional data on riemannian manifolds and spheres. The Annals of Statistics, 46(6B), 3334-3361.
-- Dai, X., Lin, Z., & Müller, H. G. (2018). Modeling Longitudinal Data on Riemannian Manifolds. [ArXiv](https://arxiv.org/abs/1812.04774)
+- Dai, X., Lin, Z., & Müller, H. G. (2019). Modeling Longitudinal Data on Riemannian Manifolds. [ArXiv](https://arxiv.org/abs/1812.04774)
 
 ## Installation
 To install `RFPCA` from GitHub
@@ -22,7 +22,7 @@ devtools::install_github('CrossD/RFPCA')
 
 ## Example on a sphere
 
-First simulate some sparse Riemannian functional data on $S^2$
+First simulate some sparse Riemannian functional data on S^2, the 2-dimensional unit sphere in R^3.
 
 ```{r, message=FALSE}
 library(RFPCA)
@@ -30,6 +30,7 @@ library(RFPCA)
 set.seed(1)
 n <- 50
 m <- 20 # Number of different time points
+
 K <- 20
 lambda <- 0.07 ^ (seq_len(K) / 2)
 D <- 3
@@ -42,11 +43,11 @@ VList <- list(
   function(x) rep(0, length(x))
 )
 pts <- seq(0, 1, length.out=m)
-mfd <- structure(1, class='Sphere')
-mu <- Makemu(mfd, VList, p0=c(rep(0, D - 1), 1), pts)
+mfdSp <- structure(1, class='Sphere')
+mu <- Makemu(mfdSp, VList, p0=c(rep(0, D - 1), 1), pts)
 
 # Generate noisy samples
-samp <- MakeMfdProcess(mfd, n, mu, pts, K = K, lambda=lambda, 
+samp <- MakeMfdProcess(mfdSp, n, mu, pts, K = K, lambda=lambda, 
                        basisType=basisType, sigma2=sigma2)
 spSamp <- SparsifyM(samp$X, samp$T, sparsity)
 yList <- spSamp$Ly
@@ -62,14 +63,22 @@ kern <- 'epan'
 resSp <- RFPCA(yList, tList, 
                list(userBwMu=bw, userBwCov=bw * 2, 
                     kernel=kern, maxK=K, 
-                    mfd=mfd, error=TRUE))
+                    mfd=mfdSp, error=TRUE))
+resEu <- RFPCA(yList, tList, 
+               list(userBwMu=bw, userBwCov=bw * 2, 
+                    kernel=kern, maxK=K, 
+                    mfd=structure(1, class='Euclidean'), 
+                    error=TRUE))
 ```
 
 Plot the mean function
 ```{r}
-# Solid curve stands for the true mean and dashed for the estimated mean function.
-matplot(pts, t(mu), type='l', lty=1)
-matplot(pts, t(resSp$muObs), type='l', lty=2, add=TRUE)
+# Dotted curve stands for the true mean, 
+# dashed for the estimated mean function using the euclidean method, 
+# and solid for our intrinsic Riemannian method.
+matplot(pts, t(mu), type='l', lty=3)
+matplot(pts, t(resEu$muObs), type='l', lty=2, add=TRUE)
+matplot(pts, t(resSp$muObs), type='l', lty=1, add=TRUE)
 ```
 
 Plot the principal components; up to 3 were well-estimated 

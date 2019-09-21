@@ -1,6 +1,6 @@
 #' Create a mean function 
 #'
-#' Generate a mean function through the exponential map. Specify a basepoint \eqn{p_0} and \eqn{V_\mu(t)}. Then \eqn{\mu=\exp_{p_0}V_{\mu(t)}
+#' Generate a mean function through the exponential map. Specify a basepoint \eqn{p_0} and \eqn{V_\mu(t)}. Then \eqn{\mu=\exp_{p_0}V_{\mu(t)}}
 #' @param mfd An object whose class specifies the manifold to use
 #' @param VtList A list of functions. The jth function takes a vector of time, and return the corresponding V(t) in the jth entry
 #' @param p0 The basepoint, which will be converted to a vector
@@ -702,6 +702,15 @@ SparsifyM <- function(X, pts, sparsity) {
 }
 
 
+#' Componentwise Multivariate Functional Principal Component Analysis
+#'
+#' Implements the method of Happs and Grevens (2018) for Euclidean-valued multivariate functional data.
+#'
+#' @param Ly A list of matrices, each being D by n_i containing the observed values for individual i. In each matrix, columes corresponds to different time points, and rows corresponds to different dimensions. 
+#' @param Lt A list of \emph{n} vectors containing the observation time points for each individual corresponding to y. Each vector should be sorted in ascending order.
+#' @param optns A list of options control parameters specified by \code{list(name=value)}. See the `Details' section in `?FPCA`.
+#' @return See `Return` in `?RFPCA`
+#' @export
 CFPCA <- function(Ly, Lt, optns=list()) {
 
   # Componentwise FPCA and then summarize
@@ -709,15 +718,15 @@ CFPCA <- function(Ly, Lt, optns=list()) {
 
   KUse <- optns[['KUse']]
   optns <- optns[names(optns) != 'KUse']
-  if (is.null(KUse)) {
-    KUse <- max(sapply(resFPCA, function(res) length(res$lambda)))
-  }
-
   resFPCA <- lapply(seq_len(p), function(j) {
     Ly <- lapply(Ly, `[`, j, )
     res <- FPCA(Ly, Lt, optns)
     res
   })
+  if (is.null(KUse)) {
+    KUse <- max(sapply(resFPCA, function(res) length(res$lambda)))
+  }
+
 
   mfd <- structure(1, class='Euclidean')
   workGrid <- resFPCA[[1]]$workGrid

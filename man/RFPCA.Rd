@@ -77,8 +77,8 @@ muList <- list(
   function(x) rep(0, length(x))
 )
 pts <- seq(0, 1, length.out=m)
-mfd <- structure(1, class='Euclidean')
-mu <- Makemu(mfd, muList, c(rep(0, p - 1), 1), pts)
+mfd <- structure(1, class='Sphere')
+mu <- Makemu(mfd, muList, c(rep(0, D - 1), 1), pts)
 
 # Generate noisy samples
 # CreateBasis <- fdapace:::CreateBasis
@@ -92,12 +92,15 @@ bw <- 0.2
 kern <- 'epan'
 
 resEu <- RFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, maxK=K, mfdName='euclidean', error=TRUE))
+resRe <- RFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, maxK=K, mfdName='sphere', error=TRUE))
 
 # Solid curve stands for the true mean and dashed for the estimated mean function.
-matplot(pts, t(mu), type='l', lty=1)
+matplot(pts, t(mu), type='l', lty=3)
 matplot(pts, t(resEu$muObs), type='l', lty=2, add=TRUE)
+# The intrinsic estimate is much better
+matplot(pts, t(resRe$muObs), type='l', lty=1, add=TRUE)
 
-# Up to the 3rd principal components were well-estimated
-plot(resEu$xi[, 3], samp$xi[, 3]) 
+# Principal components up to the 3rd were well-estimated
+plot(resRe$xi[, 3], samp$xi[, 3]) 
 
 }
