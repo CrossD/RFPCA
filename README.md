@@ -83,8 +83,7 @@ matplot(pts, t(resSp$muObs), type='l', lty=1, add=TRUE)
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-Plot the principal components; up to 3 were
-well-estimated
+Plot the principal components; up to 3 were well-estimated
 
 ``` r
 plot(resSp$xi[, 3], samp$xi[, 3], xlab='estimated xi_3', ylab='true xi_3') 
