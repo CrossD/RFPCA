@@ -524,7 +524,8 @@ origin.Sphere <- function(mfd, dimIntrinsic) {
 
 
 
-#' @export The basis at the north pole is [0, ..., 1, ..., 0] where the 1 is at the j = 2, ..., dAmbth location. The basis at a point p is obtained through rotating the basis from the north pole to p along the shortest geodesic. 
+#' @export 
+#' @describeIn basisTan The basis at the north pole is [0, ..., 1, ..., 0] where the 1 is at the j = 2, ..., dAmbth location. The basis at a point p is obtained through rotating the basis from the north pole to p along the shortest geodesic. 
 basisTan.Sphere <- function(mfd, p) {
 
   p <- matrix(p, ncol=1)
