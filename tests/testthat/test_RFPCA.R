@@ -47,7 +47,7 @@ test_that('RFPCA works for sparse case', {
   resSp <- RFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, maxK=K))
   resEu <- RFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, maxK=K, mfdName='euclidean'))
   KCFPCA <- 10
-  resC <- CFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, KUse=KCFPCA))
+  resC <- CFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, KUse=KCFPCA, FVEthreshold=1))
 
   expect_equal(c(resSp$muObs), c(mu), tolerance=0.2, scale=1)
   expect_equal(c(resEu$muObs), c(mu), tolerance=0.2, scale=1)

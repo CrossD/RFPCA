@@ -4,10 +4,19 @@
 \alias{MakeMfdProcess}
 \title{Simulate a manifold-valued process}
 \usage{
-MakeMfdProcess(mfd, n, mu, pts = seq(0, 1, length.out = ncol(mu)),
-  K = 2, lambda = rep(1, K), sigma2 = 0, xiFun = rnorm,
-  epsFun = rnorm, epsBase = c("mu", "X"), basisType = c("cos", "sin",
-  "fourier", "legendre01"))
+MakeMfdProcess(
+  mfd,
+  n,
+  mu,
+  pts = seq(0, 1, length.out = ncol(mu)),
+  K = 2,
+  lambda = rep(1, K),
+  sigma2 = 0,
+  xiFun = rnorm,
+  epsFun = rnorm,
+  epsBase = c("mu", "X"),
+  basisType = c("cos", "sin", "fourier", "legendre01")
+)
 }
 \arguments{
 \item{mfd}{An object whose class specifies the manifold to use}

@@ -1,6 +1,6 @@
 #' Create a mean function 
 #'
-#' Generate a mean function through the exponential map. Specify a basepoint \eqn{p_0} and \eqn{V_\mu(t)}. Then \eqn{\mu=\exp_{p_0}V_{\mu(t)}}
+#' Generate a mean function through the exponential map. Specify a basepoint \eqn{p_0} and \eqn{V_\mu(t)}. Then \eqn{\mu=\exp_{p}V_{\mu(t)}}
 #' @param mfd An object whose class specifies the manifold to use
 #' @param VtList A list of functions. The jth function takes a vector of time, and return the corresponding V(t) in the jth entry
 #' @param p0 The basepoint, which will be converted to a vector
@@ -16,6 +16,11 @@ Makemu <- function(mfd, VtList, p0, pts=seq(0, 1, length.out=50)) {
   res
 }
 
+
+#' Normalize a vector
+#' @param v A vector to be normalized to have a unit norm
+#' @param tol The tolerance value for deciding the v is actually 0, cannot be normalized, and thus return just the 0 vector
+#' @export
 Normalize <- function(v, tol=1e-10) {
   v <- as.numeric(v)
   d <- length(v)
@@ -78,6 +83,10 @@ MakeRotMat <- function(p1, p2, tol=1e-10) {
   if (sum(abs(p1 - Normalize(p1))) > tol || 
       sum(abs(p2 - Normalize(p2))) > tol) {
     stop('p1 and p2 needs to be have norm 1')
+  }
+
+  if (sum(abs(p1 + p2)) < tol) {
+    warning('Rotation between podal points is arbitrary')
   }
 
   Sphere <- structure(1, class='Sphere')
@@ -144,7 +153,7 @@ MakePhi.Sphere <-
     stop('mu has to be a matrix')
   }
   dimAmbient <- nrow(mu)
-  dimIntrinsic <- calcIntDim.Sphere(mfd, dimAmbient)
+  dimIntrinsic <- calcIntDim.Sphere(mfd, dimAmbient=dimAmbient)
   if (dimAmbient <= 1) {
     stop('mu must have more than 1 rows')
   }
@@ -189,7 +198,7 @@ MakePhi.SO <-
     stop('mu has to be a matrix')
   }
   dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim.SO(mfd, dimAmbient)
+  dimTangent <- calcTanDim.SO(mfd, dimAmbient=dimAmbient)
   dimMat <- round(sqrt(dimAmbient))
   if (dimAmbient <= 1) {
     stop('mu must have more than 1 rows')
@@ -290,7 +299,7 @@ MakePhi.L2 <-
     stop('mu has to be a matrix')
   }
   dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim(mfd, dimAmbient)
+  dimTangent <- calcTanDim(mfd, dimAmbient=dimAmbient)
   if (dimAmbient <= 1) {
     stop('mu must have more than 1 rows')
   }
@@ -343,7 +352,7 @@ MakePhi.HS <-
     stop('mu has to be a matrix')
   }
   dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim(mfd, dimAmbient)
+  dimTangent <- calcTanDim(mfd, dimAmbient=dimAmbient)
   if (dimAmbient <= 1) {
     stop('mu must have more than 1 rows')
   }
@@ -415,7 +424,7 @@ MakePhi.HS <-
     # stop('mu has to be a matrix')
   # }
   # dimAmbient <- nrow(mu)
-  # dimTangent <- calcTanDim(mfd, dimAmbient)
+  # dimTangent <- calcTanDim(mfd, dimAmbient=dimAmbient)
   # if (dimAmbient <= 1) {
     # stop('mu must have more than 1 rows')
   # }
@@ -483,65 +492,6 @@ MakePhi <- function(mfd, K, mu, pts=seq(0, 1, length.out=ncol(mu)),
 }
 
 
-# For each time point (column in mu), generate n isotropic noises distributed as epsFun on the tangent space at mu(t)
-# return an array with size (n, dimIntrinsic, nPts) 
-NoiseTangent <- function(mfd, n, mu, sigma2=0, epsFun = rnorm) {
-  UseMethod('NoiseTangent', mfd)
-}
-
-
-NoiseTangent.Euclidean <- function(mfd, n, mu, sigma2=0, epsFun = rnorm) {
-
-  m <- ncol(mu)
-  dimIntrinsic <- dimAmbient <- nrow(mu)
-  res <- vapply(seq_len(m), function(tt) {
-           eps <- matrix(epsFun(n * dimIntrinsic), n, dimIntrinsic)
-           eps
-         }, matrix(0, n, dimAmbient)) * sqrt(sigma2)
-  # res <- aperm(res, c(1, 3, 2))
-  res
-}
-
-
-NoiseTangent.Sphere <- function(mfd, n, mu, sigma2=0, epsFun = rnorm) {
-
-  m <- ncol(mu)
-  dimAmbient <- nrow(mu)
-  res <- vapply(seq_len(m), function(tt) {
-           rot <- MakeRotMat(c(rep(0, dimAmbient - 1), 1), mu[, tt])
-           eps <- cbind(matrix(epsFun(n * (dimAmbient - 1)), n, dimAmbient - 1), 0) %*% t(rot)
-           eps
-         }, matrix(0, n, dimAmbient)) * sqrt(sigma2)
-  # res <- aperm(res, c(1, 3, 2))
-  res
-}
-
-
-NoiseTangent.SO <- function(mfd, n, mu, sigma2=0, epsFun = rnorm) {
-
-  m <- ncol(mu)
-  dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim.SO(mfd, dimAmbient)
-  res <- array(epsFun(n * dimTangent * m), c(n, dimTangent, m)) * sqrt(sigma2)
-  res
-
-}
-
-
-NoiseTangent.SO <- function(mfd, n, mu, sigma2=0, epsFun = rnorm) {
-
-  m <- ncol(mu)
-  dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim.SO(mfd, dimAmbient)
-  res <- array(epsFun(n * dimTangent * m), c(n, dimTangent, m)) * sqrt(sigma2)
-  res
-
-}
-
-
-
-
-
 #' Simulate a manifold-valued process
 #'
 #' @param mfd An object whose class specifies the manifold to use
@@ -564,7 +514,7 @@ MakeMfdProcess <- function(mfd,
   epsBase <- match.arg(epsBase)
   basisType <- match.arg(basisType)
   dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim(mfd, dimAmbient)
+  dimTangent <- calcTanDim(mfd, dimAmbient=dimAmbient)
   m <- length(pts)
 
   # A function that generates iid centered and scaled random variables for scores
@@ -706,7 +656,7 @@ SparsifyM <- function(X, pts, sparsity) {
 #'
 #' Implements the method of Happs and Grevens (2018) for Euclidean-valued multivariate functional data.
 #'
-#' @param Ly A list of matrices, each being D by n_i containing the observed values for individual i. In each matrix, columes corresponds to different time points, and rows corresponds to different dimensions. 
+#' @param Ly A list of matrices, each being D by n_i containing the observed values for individual i. In each matrix, columes corresponds to different time points, and rows corresponds to ifferent dimensions.
 #' @param Lt A list of \emph{n} vectors containing the observation time points for each individual corresponding to y. Each vector should be sorted in ascending order.
 #' @param optns A list of options control parameters specified by \code{list(name=value)}. See the `Details' section in `?FPCA`.
 #' @return See `Return` in `?RFPCA`
@@ -966,7 +916,14 @@ GetRVGenerator <- function(name='norm') {
 }
 
 
-GetSettingName <- function(settings, digits=3, display=c('short', 'pretty')) {
+#' Helper function for simulations
+#' 
+#' Get the name of the settings from a named list
+#' @param settings A named list. The names correponding to the setting parameter names, and the values are the parameter values
+#' @param digits How many digits to use to format the numerical values
+#' @param tiny Which version of the setting name to produce
+#' @export
+GetSettingName <- function(settings, digits=3, display=c('short', 'pretty', 'tiny')) {
 
   display <- match.arg(display)
 
@@ -974,7 +931,7 @@ GetSettingName <- function(settings, digits=3, display=c('short', 'pretty')) {
     stop("'settings' must be a named list")
   }
 
-  type <- sapply(settings, function(x) {
+  formatType <- sapply(settings, function(x) {
     if (is.list(x) && length(x) == 1) {
       x <- unlist(x)
     }
@@ -982,6 +939,7 @@ GetSettingName <- function(settings, digits=3, display=c('short', 'pretty')) {
     switch(class(x),
       'character' = '%s', 
       'numeric' = sprintf('%%.%dg', digits), 
+      'logical' = '%s', 
       'integer' = '%d', 
       stop('Not supported')
       )
@@ -1000,10 +958,22 @@ GetSettingName <- function(settings, digits=3, display=c('short', 'pretty')) {
   }, simplify=FALSE)
 
   if (display == 'short') {
-    form <- paste(paste0(names(settings), type), collapse='_')
+    form <- paste(paste0(names(settings), formatType), collapse='_')
   } else if (display == 'pretty') {
-    form <- paste(paste0(names(settings), '=', type), collapse=', ')
+    form <- paste(paste0(names(settings), '=', formatType), collapse=', ')
+  } else if (display == 'tiny') {
+    len <- 3
+    form <- paste(paste0(substr(names(settings), 1, len), formatType), 
+                  collapse='_')
+    val <- lapply(val, function(x) {
+                    if (is.character(x)) {
+                      substr(x, 1, len)
+                    } else {
+                      x
+                    }
+                  })
   }
+
 
   fn <- do.call(sprintf, c(list(form), val))
   fn

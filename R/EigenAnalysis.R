@@ -27,7 +27,7 @@ EigenAnalysis <- function(smoothCov, regGrid, K, FVE=1, muWork=NULL, tol=1e-14, 
   mat <- (mat + t(mat)) / 2 # In case smoothCov is not symmetrical due to numerics
   if (fastEig) {
     eig <- tryCatch({
-      RSpectra::eigs_sym(mat, min(K, nrow(mat)))
+      suppressWarnings(RSpectra::eigs_sym(mat, min(K, nrow(mat)), which='LA'))
     }, error=function(e) {
       eigen(mat)
     })

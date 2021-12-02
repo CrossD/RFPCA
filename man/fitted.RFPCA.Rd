@@ -2,15 +2,20 @@
 % Please edit documentation in R/Fitted.R
 \name{fitted.RFPCA}
 \alias{fitted.RFPCA}
-\title{Get the fitted trajectories for an RFPCA object}
+\title{Obtains the fitted values from an `RFPCA` object}
 \usage{
-\method{fitted}{RFPCA}(object, K, grid = c("obs", "work"), ...)
+\method{fitted}{RFPCA}(object, K, grid = c("work", "obs"), ...)
 }
 \arguments{
-\item{K}{The number of components to use}
+\item{object}{An `RFPCA` object}
 
-\item{grid}{Either `obs` for obsGrid or `work` for workGrid}
+\item{K}{The number of components to apply. If missing, default to all components in `object`}
+
+\item{grid}{The grid where the output function should be supported on}
+}
+\value{
+A 3D array with entries corresponds to (i, j, t) supported on workGrid
 }
 \description{
-Get the fitted trajectories for an RFPCA object
+Obtains the fitted values from an `RFPCA` object
 }

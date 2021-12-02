@@ -1,65 +1,63 @@
-# #' Riemannian metric of tangent vectors
-# #' 
-# #' @param mfd A class instance that represents the Riemannian manifold
-# #' @param p The base point which could be NULL if the metric does not rely on the base points
-# #' @param U A D*n matrix, each column represents a tangent vector at \emph{p}
-# #' @param V A D*n matrix, each column represents a tangent vector at \emph{p}
-# #' 
-# #' @details The tangent vectors can be represented in a coordinate frame, or in ambient space
-# #' @export
-metric.Sphere <- function(mfd,U,V,p=NULL) {
-  U <- as.matrix(U)
-  V <- as.matrix(V)
-  res <- colSums(U * V)
-  return(res)
+
+
+#' @export
+#' @describeIn metric Method
+metric.Sphere <- function(mfd, p, U, V) {
+  NextMethod()
 }
 
-# #' The norm induced by the Riemannian metric tensor on tangent spaces
-# #' 
-# #' @param mfd A class instance that represents the Riemannian manifold
-# #' @param p The base point which could be NULL if the norm does not rely on it
-# #' @param U A D*n matrix, where each column represents a tangent vector at \emph{p}
-norm.Sphere <- function(mfd,U,p=NULL)
-{
-    return(sqrt(colSums(U*U)))
+
+#' @export
+#' @describeIn norm Method
+norm.Sphere <- function(mfd, p, U) {
+  NextMethod()
 }
 
 # #' The Euclidean norm of tangent vectors. Only meaningful for Euclidean submanifolds
 # #' 
 # #' @param U A D*n matrix. Each column represents a tangent vector in the ambient space
-euclideanNorm <- function(U){
-    return(sqrt(colSums(U*U)))
-}
 
 # #' Geodesic distance of points on the manifold
 # #' 
 # #' @param mfd A class instance that represents the Riemannian manifold
 # #' @param X A D*n matrix. Each column represents a point on manifold
 # #' @param Y A D*n matrix. Each column represents a point on manifold
-# #' @return A 1*n vector. The \emph{i}th element is the geodesic distance of \code{X[,i]} and \code{Y[,i]}
-distance.Sphere <- function(mfd,X,Y)
-{
+# #' @return A 1*n vector. The \emph{i}th element is the geodesic distance of \code{X[, i]} and \code{Y[, i]}
+
+#' @export
+#' @describeIn distance Method
+distance.Sphere <- function(mfd, X, Y) {
+
   X <- as.matrix(X)
   Y <- as.matrix(Y)
 
-  val <- colSums(X * Y)
+  if (length(X) == 0 || length(Y) == 0) {
+    return(numeric(0))
+  }
+
+  if (ncol(X) == 1) {
+    X <- matrix(X, nrow(Y), ncol(Y))
+  } else if (ncol(Y) == 1) {
+    Y <- matrix(Y, nrow(X), ncol(X))
+  }
+
+  val <- unname(colSums(X * Y))
   val[val > 1] <- 1
   val[val < -1] <- -1
   acos(val)
 }
 
-# #' Geodesic curve stating at a point
-# #' 
-# #' @param mfd A class instance that represents the Riemannian manifold
-# #' @param p The starting point of the geodesic curve
-# #' @param h A matrix with each column representing a tangent vector. If there is only one tangent vector is supplied, then it is replicated to match the length of \emph{t}
-# #' @param t A vector, the time points where the curve is evaluated.
-# #' 
-# #' @details The curve is \eqn{\gamma(t)=\mathrm{Exp}_p(th)}
-# #' 
-# #' @return A matrix with each colum representing a point on the manifold
-
-geodesicCurve.Sphere <- function(mfd,p,h,t)
+#' @param mfd A class instance that represents the Riemannian manifold
+#' @param p The starting point of the geodesic curve
+#' @param h A matrix with each column representing a tangent vector. If there is only one tangent vector is supplied, then it is replicated to match the length of \emph{t}
+#' @param t A vector, the time points where the curve is evaluated.
+#' 
+#' @details The curve is \eqn{\gamma(t)=\mathrm{Exp}_p(th)}
+#' 
+#' @return A matrix with each colum representing a point on the manifold
+#' @export
+#' @describeIn geodesicCurve Geodesic curve stating at a point
+geodesicCurve.Sphere <- function(mfd, p, h, t)
 {
     if(!is.matrix(p)) p <- as.matrix(p)
     if(!is.matrix(h)) h <- as.matrix(h)
@@ -74,29 +72,48 @@ geodesicCurve.Sphere <- function(mfd,p,h,t)
       stop('If there is more than one tangent vectors, the number of tangent vectors must be equal to the number of time points')
     }
 
-    exp.Sphere(mfd, p, h)
+    rieExp.Sphere(mfd, p, h)
     
 }
 
-# #' Riemannian exponential map at a point
-exp.Sphere <- function(mfd, p, V) {
+
+#' @export
+#' @describeIn rieExp Method
+rieExp.Sphere <- function(mfd, p, V) {
 
   tol <- 1e-10
 
-  # p needs to be on a unit sphere
-  stopifnot(abs(sum(p^2) - 1) <= tol)
+  V <- as.matrix(V)
+  p <- as.matrix(p)
+  m <- dim(p)[2]
+  n <- dim(V)[2]
+  d <- dim(V)[1]
 
-  if (!is.matrix(V)) {
-    V <- matrix(V)
-    stopifnot(length(V) == length(p))
-  } else {
-    stopifnot(nrow(V) == length(p))
+  if (length(p) == 0 || length(V) == 0) {
+    return(matrix(0, nrow(p), 0))
   }
 
-  # each col of V needs to be orthogonal to p
-  stopifnot(all(abs(apply(na.omit(V), 2, crossprod, y=p) - 0) <= tol))
+  if (m == 1 && n != 1) {
+    p <- matrix(p, d, n)
+  } else if (m > 1 && n == 1) {
+    V <- matrix(V, d, m)
+  }
+  mn <- max(m, n)
 
-  res <- apply(V, 2, Exp1, mu=p, tol=tol)
+  # p needs to be on a unit sphere
+  # stopifnot(abs(sum(p^2) - 1) <= tol)
+
+  stopifnot(nrow(V) == nrow(p))
+
+  # each col of V needs to be orthogonal to p
+  stopifnot(all(abs(colSums(p * V)) <= tol))
+
+  res <- vapply(seq_len(mn), function(i) {
+    Exp1(V[, i], p[, i], tol=tol)
+  }, rep(0, d))
+  if (!is.matrix(res)) {
+    res <- matrix(res, nrow=1)
+  }
   res
 }
 
@@ -107,30 +124,40 @@ exp.Sphere <- function(mfd, p, V) {
 # #' @param X A matrix. Each column represents a point on the manifold
 # #' @return A matrix with the \emph{i}th column being the log map of the \emph{i}th point
 
-log.Sphere <- function(mfd,p,X, tol=1e-10)
-{
 
-    if (!is.matrix(X)) X <- as.matrix(X)
-    p <- as.matrix(p)
-    m <- dim(p)[2]
-    n <- dim(X)[2]
-    d <- dim(p)[1]
-    if (m == 1 && n != 1) {
-      p <- matrix(p, d, n)
-    }
+#' @export
+#' @describeIn rieLog Method
+rieLog.Sphere <- function(mfd, p, X,  tol=1e-10) {
 
-    # # p needs to be on a unit sphere
-    # stopifnot(all(abs(colSums(p^2) - 1) <= tol))
+  X <- as.matrix(X)
+  p <- as.matrix(p)
+  m <- dim(p)[2]
+  n <- dim(X)[2]
+  d <- dim(X)[1]
 
-    # # each column of X needs to be on a unit sphere
-    # stopifnot(all(abs(apply(X, 2, function(x) sum(x^2)) - 1) <= tol))
+  if (length(p) == 0 || length(X) == 0) {
+    return(matrix(0, calcTanDim.Sphere(dimAmbient=d), 0))
+  }
 
-    # Z <- vapply(seq_len(n), function(i) {
-      # Log1(X[, i], p[, i], tol)
-    # }, rep(0, d))
-    Z <- Log2(X, p, tol)
+  if (m == 1 && n != 1) {
+    p <- matrix(p, d, n)
+  } else if (m > 1 && n == 1) {
+    X <- matrix(X, d, m)
+  }
+  mn <- max(m, n)
 
-    return(Z)
+  # # p needs to be on a unit sphere
+  # stopifnot(all(abs(colSums(p^2) - 1) <= tol))
+
+  # # each column of X needs to be on a unit sphere
+  # stopifnot(all(abs(apply(X, 2, function(x) sum(x^2)) - 1) <= tol))
+
+  # Z <- vapply(seq_len(n), function(i) {
+  # Log1(X[, i], p[, i], tol)
+  # }, rep(0, d))
+  Z <- Log2(X, p, tol)
+
+  return(Z)
 }
 
 
@@ -147,15 +174,15 @@ Log2 <- function(X, Mu, tol=1e-10) {
   res
 }
 
-Log1 <- function(x, mu, tol=1e-10) {
-  u <- x - c(crossprod(x, mu)) * mu
-  uNorm <- sqrt(c(crossprod(u)))
-  if (!is.na(uNorm) && uNorm <= tol) {
-    rep(0, length(x))
-  } else {
-    u / uNorm * DistS(x, mu)
-  }
-}
+# Log1 <- function(x, mu, tol=1e-10) {
+  # u <- x - c(crossprod(x, mu)) * mu
+  # uNorm <- sqrt(c(crossprod(u)))
+  # if (!is.na(uNorm) && uNorm <= tol) {
+    # rep(0, length(x))
+  # } else {
+    # u / uNorm * DistS(x, mu)
+  # }
+# }
 
 DistS <- function(x1, x2) {
   val <- crossprod(x1, x2)[1]
@@ -166,50 +193,54 @@ DistS <- function(x1, x2) {
 
 
 
-frechetMean.Sphere <- function(mfd, X, weight=NULL, tol=1e-9, maxit=1000) {
 
-  X <- as.matrix(X)
-  d <- nrow(X)
+# #' @export
+# frechetMean.Sphere <- function(mfd, X, weight=NULL, tol=1e-9, maxit=1000) {
+
+  # X <- as.matrix(X)
+  # d <- nrow(X)
   
-  if (is.null(weight)) {
-    n <- dim(X)[2]
-    weight <- rep(1 / n, n)
-    mu0 <- apply(X,1,mean)
-  } else {
-    weight <- weight / sum(weight)
-    ind <- weight > 1e-15
-    n <- sum(ind)
-    X <- X[, ind, drop=FALSE]
-    weight <- weight[ind]
-    mu0 <- apply(X*t(replicate(d, weight)), 1, sum)
-  }
+  # if (is.null(weight)) {
+    # n <- dim(X)[2]
+    # weight <- rep(1 / n, n)
+    # mu0 <- apply(X, 1, mean)
+  # } else {
+    # weight <- weight / sum(weight)
+    # ind <- weight > 1e-15
+    # n <- sum(ind)
+    # X <- X[, ind, drop=FALSE]
+    # weight <- weight[ind]
+    # mu0 <- apply(X*t(replicate(d, weight)), 1, sum)
+  # }
 
-  mu0 <- as.matrix(mu0)
-  mu0 <- mu0 / euclideanNorm(mu0) # maybe zero?
+  # mu0 <- as.matrix(mu0)
+  # mu0 <- mu0 / norm.default(U=mu0) # maybe zero?
 
-  it <- 0
-  dif <- Inf
-  SS <- Inf
+  # it <- 0
+  # dif <- Inf
+  # SS <- Inf
 
-  # browser()
-  while(dif > tol && it <= maxit) {
-    it <- it + 1
-    V <- rieLog(mfd, mu0, X)
-    vNew <- as.numeric(rowSums(V * matrix(weight, d, n, byrow=TRUE)))
-    muNew <- as.numeric(rieExp(mfd, mu0, vNew))
-    SSNew <- sum(scale(t(V), scale=FALSE)^2)
-    dif <- abs(SS - SSNew)
+  # # browser()
+  # while(dif > tol && it <= maxit) {
+    # it <- it + 1
+    # V <- rieLog(mfd, mu0, X)
+    # vNew <- as.numeric(rowSums(V * matrix(weight, d, n, byrow=TRUE)))
+    # muNew <- as.numeric(rieExp(mfd, mu0, vNew))
+    # SSNew <- sum(scale(t(V), scale=FALSE)^2)
+    # dif <- abs(SS - SSNew)
 
-    mu0 <- Normalize(muNew)
-    SS <- SSNew
-  }
+    # mu0 <- Normalize(muNew)
+    # SS <- SSNew
+  # }
 
-  if (it == maxit) {
-    stop('Maximum iteration reached!')
-  }
+  # if (it == maxit) {
+    # stop('Maximum iteration reached!')
+  # }
 
-  matrix(mu0)
-}
+  # matrix(mu0)
+# }
+
+
 # #' Frechet mean of a set of points
 # #' @param mfd A class instance that represents the Riemannian manifold
 # #' @param X A matrix. Each column is a point on the manifold
@@ -218,25 +249,25 @@ frechetMean.Sphere <- function(mfd, X, weight=NULL, tol=1e-9, maxit=1000) {
 # #' 
 # #' @return A vector representing the Frechet mean of \emph{X}
 # # NOTE by XD: The returned point is not quite on the sphere - numerical error is large
-# frechetMean.Sphere2D <- function(mfd,X,weight=NULL,
-                                 # opt.control=list(outer.iter=40,tol=1e-5,trace=0))
+# frechetMean.Sphere2D <- function(mfd, X, weight=NULL,
+                                 # opt.control=list(outer.iter=40, tol=1e-5, trace=0))
 # {
     # X <- as.matrix(X)
     # n <- dim(X)[2]
     # objFunc <- function(p){
-        # P <- matrix(p,3,n)
+        # P <- matrix(p, 3, n)
         # if(is.null(weight))
-            # return(sum(distance(mfd,X,P)))
+            # return(sum(distance(mfd, X, P)))
         # else
-            # return(sum(distance(mfd,X,P)*weight))
+            # return(sum(distance(mfd, X, P)*weight))
     # }
     # equalFunc <- function(p)
     # {
         # p[1]^2+p[2]^2+p[3]^2
     # }
     
-    # if(is.null(weight)) p0 <- apply(X,1,mean)
-    # else p0 <- apply(X*t(replicate(3,weight)),1,mean)
+    # if(is.null(weight)) p0 <- apply(X, 1, mean)
+    # else p0 <- apply(X*t(replicate(3, weight)), 1, mean)
 
     # p0 <- as.matrix(p0)
     # p0 <- p0 / euclideanNorm(p0) # maybe zero?
@@ -246,7 +277,7 @@ frechetMean.Sphere <- function(mfd, X, weight=NULL, tol=1e-9, maxit=1000) {
                   # eqfun=equalFunc,
                   # eqB=1,
                   # LB=c(-1,-1,-1),
-                  # UB=c(1,1,1),
+                  # UB=c(1, 1, 1),
                   # control=opt.control)
     # if(res$convergence==0) return(res$pars)
     # else
@@ -259,9 +290,9 @@ frechetMean.Sphere <- function(mfd, X, weight=NULL, tol=1e-9, maxit=1000) {
                              # eqfun=equalFunc,
                              # eqB=1,
                              # LB=c(-1,-1,-1),
-                             # UB=c(1,1,1),
+                             # UB=c(1, 1, 1),
                              # control=opt.control)
-        # return(project(mfd,res1$pars))
+        # return(project(mfd, res1$pars))
     # }
 # }
 
@@ -277,60 +308,73 @@ frechetMean.Sphere <- function(mfd, X, weight=NULL, tol=1e-9, maxit=1000) {
 # #' 
 # #' @return A matrix with \code{length(xout)} columns. The \emph{i}th column is the estimated mean curve at \code{xout[i]} 
 
-frechetMeanCurve.Sphere <- function(mfd, bw, kernel_type, xin, 
-                                      yin, xout, npoly = 1L, 
-                                      win=rep(1L, length(xin))){
-    
-    if(is.unsorted(xout)){
-        stop('`xout` needs to be sorted in increasing order')
-    }
-    
-    if(all(is.na(win)) || all(is.na(xin)) || all(is.na(yin))){
-        stop(' win, xin or yin contain only NAs!')
-    }
-    
-    # Deal with NA/NaN measurement values
-    NAinY = is.na(xin) | is.na(yin) | is.na(win)
-    if(any(NAinY)){
-        win = win[!NAinY]
-        xin = xin[!NAinY]
-        yin = yin[!NAinY]
-    } 
-    
-    nout <- length(xout)
-    # kw <- getKernelWeight(kernel_type,bw,xin,xout,win)
-    # browser()
-    kw <- getKernelWeight1(kernel_type,bw,xin,xout,win, npoly)
-    
-    # if(npoly == 0) # constant kernel smoothing
-    # {
-        # could be faster if local compact kernel by drop points with zero weight
-        meanCurve <- sapply(1:nout, function(i) frechetMean(mfd,yin,weight=kw[,i]))
-    # }
-    # else # local linear smoothing
-    # {
-        # stop('npoly >= 1 not supported yet')
-        # #meanCurve <- matrix(0,3,nout)
-    # }
-    
-    return(meanCurve)
-}
+
+# #' @export
+# frechetMeanCurve.Sphere <- function(mfd, bw, kernel_type, xin, 
+                                    # yin, xout, npoly = 1L, 
+                                    # win=rep(1L, length(xin))){
+
+  # if (!is.matrix(yin)) {
+    # yin <- matrix(yin, nrow=1)
+  # }
+
+  # if(is.unsorted(xout)){
+    # stop('`xout` needs to be sorted in increasing order')
+  # }
+
+  # if(all(is.na(win)) || all(is.na(xin)) || all(is.na(yin))){
+    # stop(' win, xin or yin contain only NAs!')
+  # }
+
+  # # Deal with NA/NaN measurement values
+  # NAinY = is.na(xin) | is.na(yin) | is.na(win)
+  # if(any(NAinY)){
+    # win = win[!NAinY]
+    # xin = xin[!NAinY]
+    # yin = yin[!NAinY]
+  # } 
+
+  # # kw <- getKernelWeight(kernel_type, bw, xin, xout, win)
+  # # browser()
+  # kw <- getKernelWeight1(kernel_type, bw, xin, xout, win, npoly)
+
+  # # if(npoly == 0) # constant kernel smoothing
+  # # {
+  # # could be faster if local compact kernel by drop points with zero weight
+  # meanCurve <- vapply(seq_along(xout), function(i) frechetMean(mfd, yin, weight=kw[, i]), rep(0, nrow(yin)))
+  # # }
+  # # else # local linear smoothing
+  # # {
+  # # stop('npoly >= 1 not supported yet')
+  # # #meanCurve <- matrix(0, 3, nout)
+  # # }
+
+  # if (!is.matrix(meanCurve)) {
+    # matrix(meanCurve, nrow=1)
+  # }
+
+  # return(meanCurve)
+# }
 
 
 #' @export
+#' @describeIn project Method
 project.Sphere <- function(mfd, p) {
   p <- as.matrix(p)
-  p <- apply(p, 2, Normalize, tol=1e-13)
-  p
+  res <- apply(p, 2, Normalize, tol=1e-13)
+  matrix(res, nrow=nrow(p))
 }
 
 
+
+#' @export
+#' @describeIn projectTangent Method
 # Project ambient space data onto the tangent space at p
 projectTangent.Sphere <- function(mfd, p, X, projMatOnly=FALSE) {
 
   dd <- length(p)
   stopifnot(abs(sum(p^2) - 1) < 1e-14)
-  projMat <- diag(dd) - c(tcrossprod(p))
+  projMat <- diag(nrow=dd) - c(tcrossprod(p))
 
   if (projMatOnly) {
     return(projMat)
@@ -340,12 +384,12 @@ projectTangent.Sphere <- function(mfd, p, X, projMatOnly=FALSE) {
 }
 
 # vector cross product
-# u,v: 3 by n vectors
-xprod <- function(u,v) {
-    return( rbind(u[2,]*v[3,]-u[3,]*v[2,], 
-              u[3,]*v[1,]-u[1,]*v[3,], 
-              u[1,]*v[2,]-u[2,]*v[1,]) )
-}
+# u, v: 3 by n vectors
+# xprod <- function(u, v) {
+    # return( rbind(u[2,]*v[3,]-u[3,]*v[2,], 
+              # u[3,]*v[1,]-u[1,]*v[3,], 
+              # u[1,]*v[2,]-u[2,]*v[1,]) )
+# }
 
 
 Exp1 <- function(v, mu, tol=1e-10) {
@@ -358,6 +402,7 @@ Exp1 <- function(v, mu, tol=1e-10) {
 }
 
 
+#' @export
 calcGeomPar.Sphere <- function(mfd, dimAmbient, dimIntrinsic, dimTangent) {
 
   if (!missing(dimIntrinsic)) {
@@ -370,25 +415,43 @@ calcGeomPar.Sphere <- function(mfd, dimAmbient, dimIntrinsic, dimTangent) {
 }
 
 
-calcIntDim.Sphere <- function(mfd, dimAmbient, dimTangent) {
+#' @export
+calcIntDim.Sphere <- function(mfd, geomPar, dimAmbient, dimTangent) {
 
-  if (!missing(dimAmbient)) {
-    dimAmbient - 1
+  if (!missing(geomPar)) {
+    as.integer(geomPar)
+  } else if (!missing(dimAmbient)) {
+    as.integer(dimAmbient - 1)
   } else if (!missing(dimTangent)) {
-    dimTangent - 1
+    as.integer(dimTangent - 1)
   }
 
 }
 
 
-calcTanDim.Sphere <- function(mfd, dimAmbient, dimIntrinsic) {
+#' @export
+calcTanDim.Sphere <- function(mfd, geomPar, dimAmbient, dimIntrinsic) {
 
-  if (!missing(dimAmbient)) {
-    dimAmbient
+  if (!missing(geomPar)) {
+    as.integer(geomPar + 1)
+  } else if (!missing(dimAmbient)) {
+    as.integer(dimAmbient)
   } else if (!missing(dimIntrinsic)) {
-    dimIntrinsic + 1
+    as.integer(dimIntrinsic + 1)
   }
 
+}
+
+
+#' @export
+calcAmbDim.Sphere <- function(mfd, geomPar, dimIntrinsic, dimTangent) {
+  if (!missing(geomPar)) {
+    as.integer(geomPar + 1)
+  } else if (!missing(dimIntrinsic)) {
+    as.integer(dimIntrinsic + 1)
+  } else if (!missing(dimTangent)) {
+    as.integer(dimTangent)
+  }
 }
 
 
@@ -401,7 +464,7 @@ MakePhi.Sphere <-
     stop('mu has to be a matrix')
   }
   dimAmbient <- nrow(mu)
-  dimIntrinsic <- calcIntDim.Sphere(mfd, dimAmbient)
+  dimIntrinsic <- calcIntDim.Sphere(mfd, dimAmbient=dimAmbient)
   if (dimAmbient <= 1) {
     stop('mu must have more than 1 rows')
   }
@@ -437,15 +500,48 @@ MakePhi.Sphere <-
 }
 
 
+#' @export
+#' @describeIn NoiseTangent Method
 NoiseTangent.Sphere <- function(mfd, n, mu, sigma2=0, epsFun = rnorm) {
 
   m <- ncol(mu)
-  dimAmbient <- nrow(mu)
+  dimTangent <- dimAmbient <- nrow(mu)
   res <- vapply(seq_len(m), function(tt) {
            rot <- MakeRotMat(c(rep(0, dimAmbient - 1), 1), mu[, tt])
            eps <- cbind(matrix(epsFun(n * (dimAmbient - 1)), n, dimAmbient - 1), 0) %*% t(rot)
            eps
-         }, matrix(0, n, dimAmbient)) * sqrt(sigma2)
+         }, matrix(0, n, dimTangent)) * sqrt(sigma2)
   # res <- aperm(res, c(1, 3, 2))
-  res
+  array(res, c(n, dimTangent, m))
+}
+
+
+#' @export
+#' @describeIn origin The origin has 1 in the first ambient coordinate and 0 otherwise.
+origin.Sphere <- function(mfd, dimIntrinsic) {
+  matrix(c(1, rep(0, dimIntrinsic)))
+}
+
+
+
+#' @export The basis at the north pole is [0, ..., 1, ..., 0] where the 1 is at the j = 2, ..., dAmbth location. The basis at a point p is obtained through rotating the basis from the north pole to p along the shortest geodesic. 
+basisTan.Sphere <- function(mfd, p) {
+
+  p <- matrix(p, ncol=1)
+  d <- calcIntDim.Sphere(mfd, dimAmbient=length(p))
+
+  tmp <- diag(nrow = d + 1)[, -1, drop=FALSE]
+  D <- MakeRotMat(origin(mfd, d), p) %*% tmp
+  D
+
+}
+
+
+#' Generate uniform random variables on the unit sphere
+#' @param n Sample size
+#' @param dimAmbient The dimension of the ambient space
+#' @export
+runifSphere <- function(n, dimAmbient) {
+  X <- matrix(rnorm(n * dimAmbient), dimAmbient, n)
+  matrix(apply(X, 2, Normalize), dimAmbient, n)
 }

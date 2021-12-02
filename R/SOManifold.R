@@ -2,30 +2,19 @@
 ## we use only the lower triangle of the skew-symmetric matrices on the tangent spaces to 
 ## denote the tangent vectors. 
 
-# #' Riemannian metric of tangent vectors
-# #' 
-# #' @param mfd A class instance that represents the Riemannian manifold
-# #' @param p The base point which could be NULL if the metric does not rely on the base points
-# #' @param U A D*n matrix, each column represents a tangent vector at \emph{p}
-# #' @param V A D*n matrix, each column represents a tangent vector at \emph{p}
-# #' 
-# #' @details The tangent vectors can be represented in a coordinate frame, or in ambient space
-# #' @export
-metric.SO <- function(mfd,U,V,p=NULL) {
 
-  U <- as.matrix(U)
-  V <- as.matrix(V)
-  res <- colSums(U * V)
-  return(res)
+
+#' @export
+#' @describeIn metric Method
+metric.SO <- function(mfd, p, U, V) {
+  NextMethod('metric')
 }
 
-# #' The norm induced by the Riemannian metric tensor on tangent spaces
-# #' 
-# #' @param mfd A class instance that represents the Riemannian manifold
-# #' @param p The base point which could be NULL if the norm does not rely on it
-# #' @param U A D*n matrix, where each column represents a tangent vector at \emph{p}
-norm.SO <- function(mfd,U,p=NULL) {
-    return(sqrt(colSums(U*U)))
+
+#' @export
+#' @describeIn norm Method
+norm.SO <- function(mfd, p, U) {
+  norm.default(mfd, p, U)
 }
 
 
@@ -34,21 +23,14 @@ norm.SO <- function(mfd,U,p=NULL) {
 # #' @param mfd A class instance that represents the Riemannian manifold
 # #' @param X A D*n matrix. Each column represents a point on manifold
 # #' @param Y A D*n matrix. Each column represents a point on manifold
-# #' @return A 1*n vector. The \emph{i}th element is the geodesic distance of \code{X[,i]} and \code{Y[,i]}
+# #' @return A 1*n vector. The \emph{i}th element is the geodesic distance of \code{X[, i]} and \code{Y[, i]}
+
+#' @export
+#' @describeIn distance Method
 distance.SO <- function(mfd, X, Y) {
   X <- as.matrix(X)
   Y <- as.matrix(Y)
-
-  d <- round(sqrt(nrow(X)))
-  n <- ncol(X)
-
-  V <- sapply(seq_len(n), function(i) {
-    x <- matrix(X[, i], d, d)
-    y <- matrix(Y[, i], d, d)
-    log.SO(X=as.numeric(crossprod(x, y)))
-  })
-
-  norm.SO(mfd, V)
+  distSO(X, Y)
 }
 
 
@@ -63,7 +45,7 @@ distance.SO <- function(mfd, X, Y) {
 # #' 
 # #' @return A matrix with each colum representing a point on the manifold
 
-# geodesicCurve.SO <- function(mfd,p,h,t) {
+# geodesicCurve.SO <- function(mfd, p, h, t) {
     # if(!is.matrix(p)) p <- as.matrix(p)
     # if(!is.matrix(h)) h <- as.matrix(h)
     # stopifnot(all(abs(crossprod(p, h) - 0) < 1e-8))
@@ -77,20 +59,25 @@ distance.SO <- function(mfd, X, Y) {
       # stop('If there is more than one tangent vectors, the number of tangent vectors must be equal to the number of time points')
     # }
 
-    # exp.SO(mfd, p, h)
+    # rieExp.SO(mfd, p, h)
     
 # }
 
 
 # #' Riemannian exponential map at a point
-exp.SO <- function(mfd, p, V, tol=1e-10) {
 
-  if (!is.matrix(V)) {
-    V <- matrix(V, ncol=1)
-  }
+#' @export
+#' @describeIn rieExp Method
+rieExp.SO <- function(mfd, p, V, tol=1e-10) {
+
+  V <- as.matrix(V)
 
   n <- ncol(V)
   d <- calcGeomPar.SO(dimTangent=nrow(V))
+
+  if (length(V) == 0 || (!missing(p) && length(p) == 0) ) {
+    return(matrix(0, nrow(p), 0))
+  }
 
   if (missing(p)) {
     p <- matrix(diag(d), d^2, ncol(V))
@@ -116,11 +103,11 @@ exp.SO <- function(mfd, p, V, tol=1e-10) {
                     ExpMSO3(vMat, tol) %*% muMat
                   } else {
                     # seems only 'Eigen' works but not 'Higham08'
-                    ExpM(vMat, method='R_Eigen') %*% muMat
+                    ExpM(vMat) %*% muMat
                   }
                })
 
-  res
+  matrix(res, ncol=n)
 }
 
 
@@ -130,46 +117,59 @@ exp.SO <- function(mfd, p, V, tol=1e-10) {
 # #' @param X A matrix. Each column represents a point on the manifold
 # #' @return A matrix with the \emph{i}th column being the log map of the \emph{i}th point
 
-log.SO <- function(mfd, p, X, tol=1e-10) {
 
-  if (!is.matrix(X)) {
-    X <- matrix(X, ncol=1)
-  }
+#' @export
+#' @describeIn rieLog Method
+rieLog.SO <- function(mfd, p, X, tol=1e-10) {
 
-  n <- ncol(X)
-  d <- round(sqrt(nrow(X)))
-
+  X <- as.matrix(X)
   if (missing(p)) {
-    p <- matrix(diag(d), nrow(X), ncol(X))
+    p <- matrix(diag(nrow=sqrt(nrow(X))))
   } else {
-    if (is.matrix(p)) {
-      stopifnot(nrow(p) == nrow(X))
-    } else {
-      p <- matrix(p)
-    }
-    if (ncol(p) == 1) {
-      p <- matrix(p, nrow(X), n)
-    }
+    p <- as.matrix(p)
   }
+  logSO(p, X)
+  # X <- as.matrix(X)
+  # d <- round(sqrt(nrow(X)))
 
-  res <- sapply(seq_len(n), function(i) {
-                  xMat <- matrix(X[, i], d, d)
-                  muMat <- matrix(p[, i], d, d)
-                  stopifnot(isSO(xMat, tol))
-                  if (d == 3) {
-                    LogMSO3(tcrossprod(xMat, muMat))
-                  } else {
-                    # seems only 'Eigen' works but not 'Higham08'
-                    LogM(tcrossprod(xMat, muMat), method='Eigen')
-                  }
-                 })
+  # if (missing(p)) {
+    # p <- c(diag(nrow=d))
+  # }
+  # p <- as.matrix(p)
+  # if (length(p) == 0 || length(X) == 0) {
+    # return(matrix(0, calcTanDim.SO(dimAmbient=nrow(p)), 0))
+  # }
 
-  res[c(lower.tri(diag(d))), , drop=FALSE]
+  # if (ncol(p) == 1) {
+    # p <- matrix(p, nrow(p), ncol(X))
+  # } else if (ncol(X) == 1) {
+    # X <- matrix(X, nrow(X), ncol(p))
+  # }
+  # n <- ncol(X)
+
+  # res <- sapply(seq_len(n), function(i) {
+                  # xMat <- matrix(X[, i], d, d)
+                  # muMat <- matrix(p[, i], d, d)
+                  # stopifnot(isSO(xMat, tol))
+                  # if (d == 3) {
+                    # LogMSO3(tcrossprod(xMat, muMat))
+                  # } else {
+                    # # seems only 'Eigen' works but not 'Higham08'
+                    # tryCatch(
+                      # LogM(tcrossprod(xMat, muMat)),
+                      # error = function(e) 
+                        # LogM(tcrossprod(xMat, muMat))
+                      # )
+                  # }
+                 # })
+  # res <- matrix(res, ncol=n)
+
+  # res[c(lower.tri(diag(d))), , drop=FALSE]
 }
 
 # Matrix logarithm
 # mat A matrix
-LogM <- function(mat, method='Higham08') {
+LogM_old <- function(mat, method='Higham08') {
 
   expm::logm(mat, method)
 
@@ -179,12 +179,21 @@ LogM <- function(mat, method='Higham08') {
 LogMSO3 <- function(mat, tol=1e-10) {
 
   if (nrow(mat) == 3) {
-    theta <- acos((sum(diag(mat)) - 1) / 2)
+    val <- (sum(diag(mat)) - 1) / 2
+
+    if (val > 1) {
+      val <- 1
+    } else if (val < -1) {
+      val <- -1
+    }
+    theta <- acos(val)
+
     if (abs(theta) < tol) {
       res <- matrix(0, 3, 3)
     } else {
       res <- theta / (2 * sin(theta)) * (mat - t(mat))
     }
+
   } else {
     stop()
   }
@@ -192,7 +201,7 @@ LogMSO3 <- function(mat, tol=1e-10) {
 }
 
 
-ExpM <- function(mat, method='R_Eigen') {
+ExpM_old <- function(mat, method='R_Eigen') {
   expm::expm(mat, method)
 }
 
@@ -215,16 +224,19 @@ ExpMSO3 <- function(mat, tol=1e-10) {
 
 # Project extrinsic tangent space data onto the tangent space at p
 # p must be a single point on the manifold
+
+#' @export
+#' @describeIn projectTangent Method
 projectTangent.SO <- function(mfd, p, X, projMatOnly=FALSE) {
 
   d <- round(sqrt(length(p)))
   stopifnot(isSO(matrix(p, d, d)))
-  projMat <- diag(d)
+  projMat <- diag(nrow=d)
 
   if (projMatOnly) {
     return(projMat)
   } else {
-    return(X)
+    return(as.matrix(X))
   }
 }
 
@@ -275,7 +287,7 @@ MakeSkewSym <- function(v) {
 MakeSkewSymFunc <- function(fList) {
 
     p <- length(fList)
-    d <- calcGeomPar.SO(dimTangent=p)
+    d <- calcGeomPar.SO(dimIntrinsic=p)
 
     outList <- matrix(list(), d, d)
     outList[] <- lapply(outList, function(l) {function(x) rep(0, length(x))})
@@ -406,6 +418,9 @@ NearestOrth <- function(A) {
 
 # Get the nearest SO matrix
 #' @export
+
+#' @export
+#' @describeIn project Method
 project.SO <- function(mfd, A) {
 
   A <- as.matrix(A)
@@ -420,17 +435,19 @@ project.SO <- function(mfd, A) {
     }
     c(N)
   })
-  res
+  matrix(res, nrow(A), ncol(A))
 }
 
 
 # Calculate the parameter n of SO(n) given the length of the lower triangle
+
+#' @export
 calcGeomPar.SO <- function(mfd, dimIntrinsic, dimAmbient, dimTangent) {
 
   if (!missing(dimIntrinsic)) {
-    dimTangent <- calcTanDim.SO(dimIntrinsic=dimIntrinsic)
+    dimTangent <- dimIntrinsic
   } else if (!missing(dimAmbient)) {
-    dimTangent <- calcTanDim.SO(dimAmbient=dimAmbient)
+    return(as.integer(sqrt(dimAmbient)))
   } else if (!missing(dimTangent)) {
   }
 
@@ -441,30 +458,48 @@ calcGeomPar.SO <- function(mfd, dimIntrinsic, dimAmbient, dimTangent) {
     stop('The input is not the dimTangent of a lower trianglular matrix')
   }
 
-  n
+  as.integer(n)
 }
 
 
-calcIntDim.SO <- function(mfd, dimAmbient, dimTangent) {
+#' @export
+calcIntDim.SO <- function(mfd, geomPar, dimAmbient, dimTangent) {
 
-  if (!missing(dimAmbient)) {
+  if (!missing(geomPar)) {
+    n <- geomPar
+  } else if (!missing(dimAmbient)) {
     n <- round(sqrt(dimAmbient))
   } else if (!missing(dimTangent)) {
-    n <- calcGeomPar.SO(dimTangent=dimTangent)
+    return(as.integer(dimTangent))
   }
-  n * (n - 1) / 2
+  as.integer(n * (n - 1) / 2)
  
 }
 
 
-calcTanDim.SO <- function(mfd, dimAmbient, dimIntrinsic) {
+#' @export
+calcTanDim.SO <- function(mfd, geomPar, dimAmbient, dimIntrinsic) {
 
-  if (!missing(dimAmbient)) {
-    calcIntDim.SO(dimAmbient=dimAmbient)
+  if (!missing(geomPar)) {
+    as.integer(geomPar * (geomPar - 1) / 2)
+  } else if (!missing(dimAmbient)) {
+    as.integer(calcIntDim.SO(dimAmbient=dimAmbient))
   } else if (!missing(dimIntrinsic)) {
-    dimIntrinsic
+    as.integer(dimIntrinsic)
   }
 
+}
+
+
+#' @export
+calcAmbDim.SO <- function(mfd, geomPar, dimIntrinsic, dimTangent) {
+  if (!missing(geomPar)) {
+    as.integer(geomPar ^ 2)
+  } else if (!missing(dimIntrinsic)) {
+    as.integer(calcGeomPar.SO(mfd, dimIntrinsic=dimIntrinsic)^2)
+  } else if (!missing(dimTangent)) {
+    as.integer(calcGeomPar.SO(mfd, dimTangent=dimTangent)^2)
+  }
 }
 
 
@@ -477,7 +512,7 @@ MakePhi.SO <-
     stop('mu has to be a matrix')
   }
   dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim.SO(mfd, dimAmbient)
+  dimIntrinsic <- calcIntDim.SO(mfd, dimAmbient=dimAmbient)
   dimMat <- round(sqrt(dimAmbient))
   if (dimAmbient <= 1) {
     stop('mu must have more than 1 rows')
@@ -491,15 +526,15 @@ MakePhi.SO <-
     stop('The range of pts should be within [0, 1]')
   }
 
-  ptsSqueeze <- do.call(c, lapply(seq_len(dimTangent), function(i) {
+  ptsSqueeze <- do.call(c, lapply(seq_len(dimIntrinsic), function(i) {
                           pts + (max(pts) + mean(diff(pts))) * (i - 1)
                         }))
   ptsSqueeze <- ptsSqueeze / max(ptsSqueeze)
   
-  phi <- array(fdapace:::CreateBasis(K, ptsSqueeze, type), c(m, dimTangent, K)) / 
-    sqrt(dimTangent)
+  phi <- array(fdapace:::CreateBasis(K, ptsSqueeze, type), c(m, dimIntrinsic, K)) / 
+    sqrt(dimIntrinsic)
 
-  dimnames(phi) <- list(t=pts, j=seq_len(dimTangent), k=seq_len(K))
+  dimnames(phi) <- list(t=pts, j=seq_len(dimIntrinsic), k=seq_len(K))
   phi
 
   # vapply(seq_len(m), function(tt) {
@@ -527,8 +562,61 @@ NoiseTangent.SO <- function(mfd, n, mu, sigma2=0, epsFun = rnorm) {
 
   m <- ncol(mu)
   dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim.SO(mfd, dimAmbient)
-  res <- array(epsFun(n * dimTangent * m), c(n, dimTangent, m)) * sqrt(sigma2)
+  dimIntrinsic <- calcIntDim.SO(mfd, dimAmbient=dimAmbient)
+  res <- array(epsFun(n * dimIntrinsic * m), c(n, dimIntrinsic, m)) * sqrt(sigma2)
   res
 
+}
+
+
+#' @export
+#' @describeIn origin The origin has 1 in the first ambient coordinate and 0 otherwise.
+origin.SO <- function(mfd, dimIntrinsic) {
+  matrix(diag(calcGeomPar(mfd, dimIntrinsic=dimIntrinsic)))
+}
+
+
+#' @export
+#' @describeIn basisTan Method
+basisTan.SO <- function(mfd, p) {
+  diag(nrow=calcIntDim(mfd, dimAmbient=length(p)))
+}
+
+
+#' Returns the angle representation of SO(3) matrices
+#' c.f. \url{https://en.wikipedia.org/wiki/Axis-angle_representation}
+#' @param mfd A manifold object created by \code{\link{createM}}
+#' @param X A matrix holding a vectorized SO(3) matrix in each column
+#' @return A matrix with 4 rows and the same number of columns as X. The first row contains the angles in rads (theta), and the last three rows correspond to the the axes with respect to which the rotations are performed.
+#' @export
+axisAngleRep <- function(mfd, X) {
+  
+  X <- as.matrix(X)
+
+  if (!inherits(mfd, 'SO') || nrow(X) != 9) {
+    stop('Axis-angle representation only works for SO(3)')
+  }
+
+  res <- apply(X, 2, function(x) {
+                 # browser()
+    R <- matrix(x, 3, 3)
+    t1 <- (sum(diag(R)) - 1) / 2 
+    theta <- acos(t1)
+    tol <- 1e-12
+    if (abs(theta) < tol) {
+      omega <- c(1, 0, 0)
+    } else if (abs(theta) > pi - tol) {
+      B <- (R + diag(3)) / 2
+      omega <- sqrt(diag(B))
+    } else {
+      omega <- 1 / (2 * sin(theta)) * 
+        c(R[3, 2] - R[2, 3],
+          R[1, 3] - R[3, 1],
+          R[2, 1] - R[1, 2])
+    }
+
+    c(theta, omega)
+  })
+
+  matrix(res, 4, ncol(X))
 }

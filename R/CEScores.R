@@ -24,7 +24,6 @@ CEScores <- function(y, t, optns, mu, obsGrid, fittedCov, lambda, phi, sigma2) {
 
   MuPhiSig <- MuPhiSigMult(t, obsGrid, mu, phi, Sigma_Y)
   ret <- mapply(function(yVec, muphisig) {
-                  # browser()
            fdapace:::GetIndCEScores(
              yVec, muphisig$muVec, lambda, muphisig$phiMat, muphisig$Sigma_Yi, verbose=FALSE
            )}, 

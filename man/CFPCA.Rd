@@ -7,7 +7,7 @@
 CFPCA(Ly, Lt, optns = list())
 }
 \arguments{
-\item{Ly}{A list of matrices, each being D by n_i containing the observed values for individual i. In each matrix, columes corresponds to different time points, and rows corresponds to different dimensions.}
+\item{Ly}{A list of matrices, each being D by n_i containing the observed values for individual i. In each matrix, columes corresponds to different time points, and rows corresponds to ifferent dimensions.}
 
 \item{Lt}{A list of \emph{n} vectors containing the observation time points for each individual corresponding to y. Each vector should be sorted in ascending order.}
 

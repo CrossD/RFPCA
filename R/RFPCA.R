@@ -6,12 +6,12 @@
 #' @param Lt A list of \emph{n} vectors containing the observation time points for each individual corresponding to y. Each vector should be sorted in ascending order.
 #' @param optns A list of options control parameters specified by \code{list(name=value)}. See `Details'.
 #' 
-#' @details Supported classes includes: 'Sphere' (default), 'Euclidean', 'SO' 
+#' @details Supported classes includes: 'Sphere' (default), 'Euclidean', 'SO', 'HS', 'L2', 'Dens'.
 #'
 #' Available control options are 
 #' \describe{
 #' item{mfd}{A structure such as structure(1, class='CLASS'), where CLASS is one of the supported classes above. Takes precedence over mfdName. Default: structure(1, 'Sphere')}
-#' item{mfdName}{The name of a manifold. Supported values are 'Sphere', 'Euclidean', 'SO', 'L2'. Default: 'Sphere'}
+#' item{mfdName}{The name of a manifold. Supported values are 'Sphere', 'Euclidean', 'SO', 'HS', 'L2', 'Dens'. Default: 'Sphere'}
 #' item{dataType}{The type of design we have (usually distinguishing between sparse or dense functional data); 'Sparse', 'Dense', 'DenseWithMV', 'p>>n'. Default:  determine automatically based on 'IsRegular'}
 #' item{userBwMu}{The bandwidth for smoothing the mean function. Can be either a scalar specifying the bandwidth, or 'GCV' for generalized cross-validation. MUST BE SPECIFIED}
 #' item{userBwCov}{The bandwidth for smoothing the covariance function. Can be a scalar specifying the bandwidth. If userBwCov = 'GCV', then userBwCov will be set to twice the GCV-selected bandwidth for mu. MUST BE SPECIFIED}
@@ -63,8 +63,8 @@
 #'   function(x) rep(0, length(x))
 #' )
 #' pts <- seq(0, 1, length.out=m)
-#' mfd <- structure(1, class='Sphere')
-#' mu <- Makemu(mfd, muList, c(rep(0, D - 1), 1), pts)
+#' mfd <- structure(1, class='Euclidean')
+#' mu <- Makemu(mfd, muList, c(rep(0, p - 1), 1), pts)
 #'
 #' # Generate noisy samples
 #' # CreateBasis <- fdapace:::CreateBasis
@@ -78,16 +78,13 @@
 #' kern <- 'epan'
 #'
 #' resEu <- RFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, maxK=K, mfdName='euclidean', error=TRUE))
-#' resRe <- RFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, maxK=K, mfdName='sphere', error=TRUE))
 #'
 #' # Solid curve stands for the true mean and dashed for the estimated mean function.
-#' matplot(pts, t(mu), type='l', lty=3)
+#' matplot(pts, t(mu), type='l', lty=1)
 #' matplot(pts, t(resEu$muObs), type='l', lty=2, add=TRUE)
-#' # The intrinsic estimate is much better
-#' matplot(pts, t(resRe$muObs), type='l', lty=1, add=TRUE)
 #'
-#' # Principal components up to the 3rd were well-estimated
-#' plot(resRe$xi[, 3], samp$xi[, 3]) 
+#' # Up to the 3rd principal components were well-estimated
+#' plot(resEu$xi[, 3], samp$xi[, 3]) 
 #' 
 #' @export
 RFPCA <- function(Ly, Lt, optns=list()) {
@@ -157,6 +154,13 @@ RFPCA <- function(Ly, Lt, optns=list()) {
 
   rownames(muObs) <- varnames
   colnames(muObs) <- obsGrid
+  rownames(muWork) <- varnames
+  colnames(muWork) <- workGrid
+
+  if (optns$meanOnly == TRUE) {
+    return(list(muReg=muReg, regGrid=regGrid, 
+                muWork=muWork, workGrid=workGrid))
+  }
 
   if (meanOnly) {
     res <- list(muReg = muReg, muWork = muWork, muObs = muObs, 
@@ -215,8 +219,11 @@ RFPCA <- function(Ly, Lt, optns=list()) {
   LyLogTrunc <- sapply(tmp, `[[`, 'y', simplify=FALSE)
   names(LtTrunc) <- names(LyLogTrunc) <- names(Lt)
   subInd <- sapply(LtTrunc, length) > 0
-  LtTrunc <- LtTrunc[subInd]
-  LyLogTrunc <- LyLogTrunc[subInd]
+  if (!all(subInd)) {
+    warning('Some subjects have no observations!')
+    LtTrunc <- LtTrunc[subInd]
+    LyLogTrunc <- LyLogTrunc[subInd]
+  }
 
   TTruncInd <- obsGrid >= ToutRange[1] & obsGrid <= ToutRange[2]
   obsGridTrunc <- obsGrid[TTruncInd]
@@ -248,6 +255,7 @@ RFPCA <- function(Ly, Lt, optns=list()) {
   lam <- eig[['lambda']]
   K <- length(lam)
   phi <- array(eig[['phi']], c(m, dimTangent, K))
+  covFitted <- eig[['fittedCov']]
 
   # Scores
   if (methodMuCovEst == 'smooth') {
@@ -301,8 +309,10 @@ RFPCA <- function(Ly, Lt, optns=list()) {
   rownames(xi) <- names(LtTrunc)
   colnames(xi) <- paste0('xi', seq_len(ncol(xi)))
 
-  res <- list(muReg = muReg, muWork = muWork, muObs = muObs, 
+  res <- list(muReg = muReg, muWork = muWork, 
+              muObs = muObs, muObsTrunc = muObsTrunc, 
               cov = covWork, # On workGrid
+              covFitted = covFitted, # On workGrid
               phi = phi, # On workGrid
               covObs = covObs, 
               phiObsTrunc = phiObsTrunc, 

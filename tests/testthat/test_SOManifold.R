@@ -91,7 +91,7 @@ test_that('Helper functions for SO(n) works', {
 })
 
 
-test_that('log.SO, exp.SO, distance.SO works', {
+test_that('rieLog.SO, rieExp.SO, distance.SO works', {
   
   mfd <- structure(list(), class='SO')
   x <- c(1, 2, 1) / 5         
@@ -108,42 +108,66 @@ test_that('log.SO, exp.SO, distance.SO works', {
   W <- matrix(c(0.980331119030009, 0.193399683419916, 0.039337761939982, -0.193399683419915, 0.901655595150045, 0.386799366839831, 0.039337761939982, -0.386799366839831, 0.921324476120036), 3, 3, byrow=TRUE)
 
   expect_equal(ExpM(z), Z)
+  expect_equal(ExpM_old(z), Z)
   expect_equal(LogM(Z), z)
+  expect_equal(LogM_old(Z), z)
   expect_equal(ExpM(w), W)
+  expect_equal(ExpM_old(w), W)
   expect_equal(ExpMSO3(w), W)
   expect_equal(LogM(W), w)
+  expect_equal(LogM_old(W), w)
   expect_equal(LogMSO3(W), w)
   expect_equal(ExpMSO3(matrix(0, 3, 3)), diag(3))
+
+  # An SPD example
+  Z <- cov(matrix(rnorm(200), 20, 10))
+  expect_equal(LogMSPD(Z), LogM(Z))
+  expect_equal(ExpM_old(LogMSPD(Z)), Z)
+
+  # microbenchmark::microbenchmark(
+    # armaSPD = LogMSPD(Z), 
+    # arma = LogM(Z),
+    # old = LogM_old(Z),
+    # times=100
+    # )
+  # Z1 <- Z
+  # Z1[1, 2] <- Z1[1, 2] + 1e-5
+  # microbenchmark::microbenchmark(
+    # armaSPD = ExpM(Z), 
+    # arma = ExpM(Z1),
+    # old = ExpM_old(Z),
+    # times=1000
+    # )
  
   expect_equal(LogM(X), LogMSO3(X))
   expect_equal(LogM(Y), LogMSO3(Y))
-  expect_equal(log.SO(mfd, as.numeric(X), as.numeric(X)), 
+  expect_equal(rieLog.SO(mfd, as.numeric(X), as.numeric(X)), 
                matrix(0, 3, 1))
-  expect_equal(c(log.SO(mfd, as.numeric(diag(3)), as.numeric(X))), 
+  expect_equal(c(rieLog.SO(mfd, as.numeric(diag(3)), as.numeric(X))), 
                matrix(expm::logm(X), ncol=1)[lower.tri(diag(3))])
-  expect_equal(log.SO(mfd, as.numeric(diag(3)), A), unname(cbind(x, y)))
+  expect_equal(rieLog.SO(mfd, as.numeric(diag(3)), A), unname(cbind(x, y)))
 
   v1 <- c(-1, -0.5, -1)
-  expect_equal(exp.SO(V=as.numeric(v1)), 
+  expect_equal(rieExp.SO(V=as.numeric(v1)), 
                matrix(expm::expm(MakeSkewSym(v1)), ncol=1))
-  expect_equal(exp.SO(V=cbind(as.numeric(v1), as.numeric(v1)))[, 1, drop=FALSE], 
+  expect_equal(rieExp.SO(V=cbind(as.numeric(v1), as.numeric(v1)))[, 1, drop=FALSE], 
                matrix(expm::expm(MakeSkewSym(v1)), ncol=1))
 
-  expect_equal(exp.SO(V=log.SO(X=A)), A)
-  expect_equal(exp.SO(mfd, as.numeric(X), log.SO(mfd, as.numeric(X), A)), A)
-  expect_equal(log.SO(X=exp.SO(V=log.SO(X=A))), unname(cbind(x, y)))
+  expect_equal(rieExp.SO(V=rieLog.SO(X=A)), A)
+  expect_equal(rieExp.SO(mfd, as.numeric(X), rieLog.SO(mfd, as.numeric(X), A)), A)
+  expect_equal(rieLog.SO(X=rieExp.SO(V=rieLog.SO(X=A))), unname(cbind(x, y)))
 
-  expect_equal(rieExp(mfd, V=as.numeric(w[lower.tri(w)])), exp.SO(V=as.numeric(w[lower.tri(w)])))
-  expect_equal(rieLog(mfd, X=as.numeric(W)), log.SO(X=as.numeric(W)))
+  expect_equal(rieExp(mfd, V=as.numeric(w[lower.tri(w)])), rieExp.SO(V=as.numeric(w[lower.tri(w)])))
+  expect_equal(rieLog(mfd, X=as.numeric(W)), rieLog.SO(X=as.numeric(W)))
 
   set.seed(1)
   for (d in 2:3) {
     p0 <- if (d == 2) 1 else if (d == 3) 3
   for (i in 1:10) {
-    mu <- exp.SO(V=rnorm(p0))
-    Z <- matrix(exp.SO(p=mu, V=rnorm(p0)), d, d)
+    mu <- rieExp.SO(V=rnorm(p0))
+    Z <- matrix(rieExp.SO(p=mu, V=rnorm(p0)), d, d)
     expect_true(isSO(Z))
-    V <- log.SO(p=mu, X=as.numeric(Z))
+    V <- rieLog.SO(p=mu, X=as.numeric(Z))
     expect_equal(nrow(V), p0)
   }
   }
@@ -153,7 +177,7 @@ test_that('log.SO, exp.SO, distance.SO works', {
   expect_equal(distance.SO(mfd, as.numeric(X), as.numeric(X)), 0)
   expect_equal(distance.SO(mfd, as.numeric(X), as.numeric(diag(3)))^2, sum(x^2))
   expect_equal(distance.SO(mfd, as.numeric(X), as.numeric(Y))^2, 
-               sum(log.SO(p=as.numeric(X), X=as.numeric(Y))^2))
+               sum(rieLog.SO(p=as.numeric(X), X=as.numeric(Y))^2))
 })
 
 
@@ -282,4 +306,32 @@ test_that('calcIntDim.SO, calcGeomPar.SO, calcTanDim.SO work', {
     expect_error(calcIntDim(mfd, 1, 2))
     expect_error(calcTanDim(mfd, 1, 2))
   }
+})
+
+
+test_that('Axis-angle representation works', {
+  
+  mfd <- createM('SO')
+  v1 <- c(0, 0, 0)
+  v2 <- c(pi, 0, 0)
+  v3 <- Normalize(c(1/3, 1/3, 1/3))
+
+  x1 <- c(rieExp(mfd, V=v1))
+  x2 <- rieExp(mfd, V=v2)
+  x3 <- rieExp(mfd, V=v3)
+
+  # results
+  r1 <- axisAngleRep(mfd, x1)
+  r2 <- axisAngleRep(mfd, x2)
+  r3 <- axisAngleRep(mfd, x3)
+
+  # expected
+  e1 <- c(0, 1, 0, 0)
+  e2 <- c(pi, 0, 0, 1)
+  e3 <- c(1, v3[1], -v3[2], v3[3])
+
+  expect_equivalent(r1, e1)
+  expect_equivalent(r2, e2)
+  expect_equivalent(r3, e3)
+  expect_equivalent(axisAngleRep(mfd, cbind(x1, x2, x3)), cbind(e1, e2, e3))
 })

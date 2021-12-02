@@ -4,8 +4,14 @@
 \alias{plot.RFPCA}
 \title{Plot an RFPCA object}
 \usage{
-\method{plot}{RFPCA}(x, type = c("mu", "phi", "cov", "fitted", "raw"),
-  K = 3, subset, inputData, dimNames)
+\method{plot}{RFPCA}(
+  x,
+  type = c("mu", "phi", "cov", "fitted", "raw"),
+  K = 3,
+  subset,
+  inputData,
+  dimNames
+)
 }
 \arguments{
 \item{x}{An RFPCA object}

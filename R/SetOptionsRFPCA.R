@@ -58,18 +58,24 @@ SetOptionsRFPCA <- function(Ly, Lt, optns) {
       mfd <- structure(1, class=c('LogEu', 'SPD'))
     } else if (mfdName == 'affsym') {
       mfd <- structure(1, class=c('AffSym', 'SPD'))
+    } else if (mfdName == 'hs') {
+      mfd <- structure(1, class=c('HS', 'L2'))
+    } else if (mfdName == 'l2') {
+      mfd <- structure(1, class='L2')
+    } else if (mfdName == 'dens') {
+      mfd <- structure(1, class=c('Dens', 'L2'))
     }
   }
   mfdName <- tolower(class(mfd)[1]) # In case mfd is specified but not mfdName
 
   if (methodMuCovEst == 'smooth') {
     if (is.null(userBwMu)) {
-      stop('Specify bandwidth for smoothing mu')
+      userBwMu <- 'GCV'
     }
 
-    if (is.null(userBwCov)) {
-      stop('Specify bandwidth for smoothing cov')
-    }
+    # if (is.null(userBwCov)) {
+    #   stop('Specify bandwidth for smoothing cov')
+    # }
   }
 
   if (is.null(ToutRange)) {
@@ -100,7 +106,7 @@ SetOptionsRFPCA <- function(Ly, Lt, optns) {
     if (methodMuCovEst == 'smooth') {
       maxK <- Inf
     } else if (methodMuCovEst == 'cross-sectional') {
-      maxK <- 30
+      maxK <- 50
     }
   }
 
@@ -131,7 +137,7 @@ SetOptionsRFPCA <- function(Ly, Lt, optns) {
   }
 
   if (is.null(verbose)) {
-    verbose <- TRUE
+    verbose <- FALSE
   }
 
   if (is.null(fastEig)) {

@@ -26,35 +26,39 @@ Fitted <- function(mfd=structure(1, class='Sphere'), muM, xi, phiM, K) {
   aperm(res, c(3, 1, 2))
 }
 
-
-#' Get the fitted trajectories for an RFPCA object
-#'
-#' @param K The number of components to use
-#' @param grid Either `obs` for obsGrid or `work` for workGrid
+#' Obtains the fitted values from an `RFPCA` object
+#' @param object An `RFPCA` object
+#' @param K The number of components to apply. If missing, default to all components in `object`
+#' @param grid The grid where the output function should be supported on
 #' @export
-fitted.RFPCA <- function(object, K, grid=c('obs', 'work'), ...) {
+#' @return A 3D array with entries corresponds to (i, j, t) supported on workGrid
+fitted.RFPCA <- function(object, K, grid=c('work', 'obs'), ...) {
 
   grid <- match.arg(grid)
-  res <- object
   if (missing(K)) {
-    K <- res[['K']]
+    K <- object[['K']]
   }
 
   # buff <- 1e-15
-  # ToutRange <- res[['optns']][['ToutRange']]
-  # regGrid <- res[['regGrid']]
+  # ToutRange <- object[['optns']][['ToutRange']]
+  # regGrid <- object[['regGrid']]
   # ind <- regGrid > ToutRange[1] - buff & regGrid < ToutRange[2] + buff
-  # muRegTrunc <- res[['muReg']][, ind, drop=FALSE]
-
-  if (grid == 'obs') {
-    mu <- res[['muObs']]
-    phi <- res[['phiObsTrunc']]
-  } else if (grid == 'work') {
-    mu <- res[['muWork']]
-    phi <- res[['phi']]
+  # muRegTrunc <- object[['muReg']][, ind, drop=FALSE]
+  if (grid == 'work') {
+    mu <- object[['muWork']]
+    phi <- object[['phi']]
+    gridPt <- object[['workGrid']]
+  } else if (grid == 'obs') {
+    mu <- object[['muObsTrunc']]
+    phi <- object[['phiObsTrunc']]
+    gridPt <- object[['obsGridTrunc']]
   }
 
-  Fitted(res[['mfd']], mu, res[['xi']], phi, K)
+  res <- Fitted(object[['mfd']], mu, object[['xi']], phi, K)
+  dimnames(res) <- list(i=rownames(object[['xi']]), 
+                        j=rownames(mu), 
+                        t=gridPt)
+  res
 }
 
 
