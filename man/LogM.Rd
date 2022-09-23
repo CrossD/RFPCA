@@ -6,6 +6,9 @@
 \usage{
 LogM(X)
 }
+\arguments{
+\item{X}{A square matrix}
+}
 \description{
 \code{LogM(X)} computes the matrix logarithm of a general matrix using Armardillo. The returned value is a complex matrix.
 }

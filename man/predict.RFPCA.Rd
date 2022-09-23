@@ -29,6 +29,8 @@
 \item{xiMethod}{Either to use the conditional expectation (`'CE'`) or the integration method (`'IN'`) to predict}
 
 \item{type}{Either to predict the FPC scores (`'xi'`) or the underlying trajectories (`'traj'`)}
+
+\item{...}{Not used}
 }
 \value{
 A 2D array of predicted scores with entries corresponds to (i, k)

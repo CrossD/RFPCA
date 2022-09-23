@@ -44,5 +44,5 @@ test_that('EstSigma2 works for R^p valued function', {
   bw <- 0.1
   kern <- 'epan'
   sigma2R <- EstSigma2(mfd, spSamp$Ly, spSamp$Lt, mu, trueCov, pts, bw, kern)
-  expect_equal(sigma2R, sigma2, tolerance=1e-1, scale=1)
+  expect_equal(sigma2R, sigma2, tolerance=1e-1)
 })

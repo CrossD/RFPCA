@@ -6,6 +6,9 @@
 \usage{
 LogMSPD(X)
 }
+\arguments{
+\item{X}{An SPD matrix}
+}
 \description{
 \code{LogMSPD(X)} computes the matrix logarithm of an SPD matrix using Armardillo. The returned value is a real matrix.
 }

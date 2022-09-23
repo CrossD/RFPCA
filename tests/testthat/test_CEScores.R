@@ -1,4 +1,5 @@
-devtools::load_all()
+# devtools::load_all()
+library(manifold)
 library(testthat)
 
 test_that('CEScores without error is OK', {
@@ -50,7 +51,7 @@ test_that('CEScores without error is OK', {
 
   # Estimated scores and true scores are the same
   for (k in seq_len(K)) {
-    expect_equal(est[, k], samp$xi[, k], scale=1, tol=1e-1)
+    expect_equal(est[, k], samp$xi[, k], tolerance=1e-1)
   }
 
   # a <- dput(spSamp)

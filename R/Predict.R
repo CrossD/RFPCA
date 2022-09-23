@@ -93,6 +93,7 @@ predict.RFPCA.HS <- function(object, newLy, newLt, sigma2, K, xiMethod, type=c('
 #' @param K The number of components to apply. If missing, default to all components in `object`
 #' @param xiMethod Either to use the conditional expectation (`'CE'`) or the integration method (`'IN'`) to predict
 #' @param type Either to predict the FPC scores (`'xi'`) or the underlying trajectories (`'traj'`)
+#' @param ... Not used
 #' @export
 #' @return A 2D array of predicted scores with entries corresponds to (i, k)
 predict.RFPCA <- function(object, newLy, newLt, 

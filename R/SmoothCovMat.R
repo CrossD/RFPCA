@@ -23,7 +23,7 @@ smoothCovM2 <- function(yList, tList, mu, regGrid, bwCov, kernel_type, error=TRU
         ind <- rep(TRUE, nrow(rcov$tpairn))
       }
       # browser()
-      res <- matrix(Lwls2D(bwCov, kernel_type, 
+      res <- matrix(fdapace::Lwls2D(bwCov, kernel_type, 
                            rcov$tpairn[ind, , drop=FALSE], 
                            rcov$rawCCov[ind], 
                            xout1=regGrid, xout2=regGrid, crosscov=TRUE), m, m)

@@ -6,9 +6,12 @@
 #' @param subset A subset of subject IDs to plot
 #' @param inputData The input data (a list of Ly and Lt)
 #' @param dimNames An optional vector specifying the dimension names
+#' @param ... Not used
 #' @export
 
-plot.RFPCA <- function(x, type=c('mu', 'phi', 'cov', 'fitted', 'raw'), K=3, subset, inputData, dimNames) {
+plot.RFPCA <- function(x, 
+                       type=c('mu', 'phi', 'cov', 'fitted', 'raw'), 
+                       K=3, subset, inputData, dimNames, ...) {
 
   type <- match.arg(type)
   if (!missing(dimNames)) {

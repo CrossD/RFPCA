@@ -1,6 +1,7 @@
-devtools::load_all()
+# devtools::load_all()
 library(testthat)
 
+set.seed(1)
 n <- 500
 p <- 3
 e1 <- matrix(1, p, 1)
@@ -143,7 +144,7 @@ test_that('smoothCovM and smoothCovM2 estimates the true covariance', {
   expect_equal(colSums(mu^2), rep(1, ncol(mu)))
 
   # Generate noiseless samples
-  CreateBasis <- fdapace:::CreateBasis
+  CreateBasis <- fdapace::CreateBasis
   samp <- MakeSphericalProcess(n, mu, pts, K = K, lambda=lambda, basisType=basisType)
   spSamp <- SparsifyM(samp$X, samp$T, sparsity)
 
@@ -165,9 +166,9 @@ test_that('smoothCovM and smoothCovM2 estimates the true covariance', {
   }
 
   # resComp <- matrix(aperm(res, c(1, 3, 2, 4)), nrow(trueCov), ncol(trueCov))
-  # expect_equal(trueCov, resComp, scale=1, tolerance=5e-2)
+  # expect_equal(trueCov, resComp, tolerance=5e-2)
   resComp2 <- matrix(aperm(res2, c(1, 3, 2, 4)), nrow(trueCov), ncol(trueCov))
-  expect_equal(trueCov, resComp2, scale=1, tolerance=5e-2)
+  expect_equal(trueCov, resComp2, tolerance=1e-1)
   # e1 <- eigen(trueCov)$vectors[, 1]
   # e1h <- eigen(resComp)$vectors[, 1]
   # matplot(cbind(e1, e1h), type='l')

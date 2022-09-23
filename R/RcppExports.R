@@ -24,6 +24,8 @@ ExpM <- function(X) {
 #'
 #' \code{LogM(X)} computes the matrix logarithm of a general matrix using Armardillo. The returned value is a complex matrix.
 #'
+#' @param X A square matrix 
+#'
 #' @export
 LogM <- function(X) {
     .Call('_RFPCA_LogM', PACKAGE = 'RFPCA', X)
@@ -32,6 +34,8 @@ LogM <- function(X) {
 #' Matrix logarithm of a symmetric positive definite
 #'
 #' \code{LogMSPD(X)} computes the matrix logarithm of an SPD matrix using Armardillo. The returned value is a real matrix.
+#'
+#' @param X An SPD matrix 
 #'
 #' @export
 LogMSPD <- function(X) {

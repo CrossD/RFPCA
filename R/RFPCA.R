@@ -53,7 +53,6 @@
 #' m <- 20 # Number of different pooled time points
 #' K <- 20
 #' lambda <- 0.07 ^ (seq_len(K) / 2)
-#' D <- 3
 #' basisType <- 'legendre01'
 #' sparsity <- 5:15
 #' sigma2 <- 0.01
@@ -62,12 +61,12 @@
 #'   function(x) sin(x * 1 * pi) * pi / 2 * 0.6,
 #'   function(x) rep(0, length(x))
 #' )
+#' D <- length(muList)
 #' pts <- seq(0, 1, length.out=m)
 #' mfd <- structure(1, class='Euclidean')
-#' mu <- Makemu(mfd, muList, c(rep(0, p - 1), 1), pts)
+#' mu <- Makemu(mfd, muList, c(rep(0, D - 1), 1), pts)
 #'
 #' # Generate noisy samples
-#' # CreateBasis <- fdapace:::CreateBasis
 #' samp <- MakeMfdProcess(mfd, n, mu, pts, K = K, lambda=lambda, basisType=basisType, sigma2=sigma2)
 #' spSamp <- SparsifyM(samp$X, samp$T, sparsity)
 #' yList <- spSamp$Ly
@@ -77,7 +76,13 @@
 #' bw <- 0.2
 #' kern <- 'epan'
 #'
-#' resEu <- RFPCA(yList, tList, list(userBwMu=bw, userBwCov=bw * 2, kernel=kern, maxK=K, mfdName='euclidean', error=TRUE))
+#' resEu <- RFPCA(yList, tList, 
+#'   list(userBwMu=bw, 
+#'        userBwCov=bw * 2, 
+#'        kernel=kern, 
+#'        maxK=K, 
+#'        mfdName='euclidean', 
+#'        error=TRUE))
 #'
 #' # Solid curve stands for the true mean and dashed for the estimated mean function.
 #' matplot(pts, t(mu), type='l', lty=1)
@@ -94,8 +99,7 @@ RFPCA <- function(Ly, Lt, optns=list()) {
 
   # Evaluate all the option names
   for (optn in names(optns)) {
-    expr <- parse(text=sprintf("%s <- optns[['%s']]", optn, optn))
-    eval(expr)
+    assign(optn, optns[[optn]])
   }
 
   Ymat <- do.call(cbind, Ly)

@@ -12,6 +12,8 @@
 \item{K}{The number of components to apply. If missing, default to all components in `object`}
 
 \item{grid}{The grid where the output function should be supported on}
+
+\item{...}{Not used}
 }
 \value{
 A 3D array with entries corresponds to (i, j, t) supported on workGrid

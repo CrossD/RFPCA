@@ -12,8 +12,8 @@ MakeMfdProcess(
   K = 2,
   lambda = rep(1, K),
   sigma2 = 0,
-  xiFun = rnorm,
-  epsFun = rnorm,
+  xiFun = stats::rnorm,
+  epsFun = stats::rnorm,
   epsBase = c("mu", "X"),
   basisType = c("cos", "sin", "fourier", "legendre01")
 )

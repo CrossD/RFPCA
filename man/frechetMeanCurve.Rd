@@ -16,7 +16,7 @@ frechetMeanCurve(
 )
 }
 \arguments{
-\item{mfd}{A class instance that represents the Riemannian manifold}
+\item{mfd}{A class instance that represents the Riemannian manifold. See the {manifold} package}
 
 \item{bw}{The bandwidth}
 

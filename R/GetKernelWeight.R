@@ -67,7 +67,7 @@ getKernelWeight1 <- function(kernel_type,bw,xin,xout,win, npoly) {
   n<- length(xin)
   I <- diag(n)  
   kw <- t(sapply(seq_len(n), function(j) {
-    Lwls1D(bw, kernel_type, win, xin, I[, j], xout, npoly)
+    fdapace::Lwls1D(bw, kernel_type, win, xin, I[, j], xout, npoly)
   }))
     
   return(kw)

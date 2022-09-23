@@ -14,8 +14,12 @@ This is the R package `RFPCA` implementing the sparse and dense Riemannian funct
 - Dai, X., Lin, Z., & Müller, H. G. (2019). Modeling Longitudinal Data on Riemannian Manifolds. [ArXiv](https://arxiv.org/abs/1812.04774)
 
 ## Installation
-To install `RFPCA` from GitHub
+To install, first install its dependency `manifold` from CRAN
+```{r, eval=FALSE}
+install.packages("manifold")
+```
 
+Then install  `RFPCA` from GitHub
 ```{r,eval=FALSE}
 devtools::install_github('CrossD/RFPCA')
 ```

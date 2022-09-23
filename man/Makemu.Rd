@@ -5,6 +5,8 @@
 \title{Create a mean function}
 \usage{
 Makemu(mfd, VtList, p0, pts = seq(0, 1, length.out = 50))
+
+Makemu(mfd, VtList, p0, pts = seq(0, 1, length.out = 50))
 }
 \arguments{
 \item{mfd}{An object whose class specifies the manifold to use}
@@ -16,5 +18,7 @@ Makemu(mfd, VtList, p0, pts = seq(0, 1, length.out = 50))
 \item{pts}{The time points to generate the mean function}
 }
 \description{
+Generate a mean function through the exponential map. Specify a basepoint \eqn{p_0} and \eqn{V_\mu(t)}. Then \eqn{\mu=\exp_{p}V_{\mu(t)}}
+
 Generate a mean function through the exponential map. Specify a basepoint \eqn{p_0} and \eqn{V_\mu(t)}. Then \eqn{\mu=\exp_{p}V_{\mu(t)}}
 }

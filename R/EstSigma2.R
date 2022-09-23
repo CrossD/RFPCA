@@ -25,7 +25,7 @@ EstSigma2 <- function(mfd, yList, tList, mu, covR, regGrid, bwCov, kernel_type, 
         ord <- order(xin)
         xin <- xin[ord]
         yin <- yin[ord]
-        res <- Lwls1D(bwCov, kernel_type, xin=xin, yin=yin, xout=regGrid, npoly=0)
+        res <- fdapace::Lwls1D(bwCov, kernel_type, xin=xin, yin=yin, xout=regGrid, npoly=0)
         res
       }, simplify='array')
       }, simplify='array')

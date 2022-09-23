@@ -10,7 +10,8 @@
   K = 3,
   subset,
   inputData,
-  dimNames
+  dimNames,
+  ...
 )
 }
 \arguments{
@@ -25,6 +26,8 @@
 \item{inputData}{The input data (a list of Ly and Lt)}
 
 \item{dimNames}{An optional vector specifying the dimension names}
+
+\item{...}{Not used}
 }
 \description{
 Plot an RFPCA object

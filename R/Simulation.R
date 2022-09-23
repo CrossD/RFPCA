@@ -17,89 +17,6 @@ Makemu <- function(mfd, VtList, p0, pts=seq(0, 1, length.out=50)) {
 }
 
 
-#' Normalize a vector
-#' @param v A vector to be normalized to have a unit norm
-#' @param tol The tolerance value for deciding the v is actually 0, cannot be normalized, and thus return just the 0 vector
-#' @export
-Normalize <- function(v, tol=1e-10) {
-  v <- as.numeric(v)
-  d <- length(v)
-  vNorm <- as.numeric(sqrt(crossprod(v)))
-  res <- if (!is.na(vNorm) && vNorm <= tol) {
-    rep(0, d)
-  } else {
-    v / vNorm
-  }
-
-  res
-}
-
-
-## Project p1 onto p2. If rej is TRUE return the rejection instead
-Proj <- function(p1, p2, rej=FALSE, tol=1e-10) {
-  p1 <- as.numeric(p1)
-  p2 <- Normalize(as.numeric(p2), tol)
-
-  if (sum(p2^2) == 0) {
-    stop('p2 cannot be 0')
-  }
-
-  proj <- c(crossprod(p1, p2)) * p2
-  res <- if (!rej) {
-    proj
-  } else { # Return the rejection
-    p1 - proj
-  }
-
-  as.numeric(res)
-}
-
-
-## Generate mean function by exponential map. 
-# VtList: a list of coordinate functions for V(t). 
-# Makemu.Sphere2D <- function(mfd, VtList, p0, pts=seq(0, 1, length.out=50)) {
-
-  # Vmat <- sapply(VtList, function(f) f(pts))
-  # res <- rieExp(mfd, p0, t(Vmat))
-
-  # res
-# }
-
-
-# Makemu.Sphere <- function(mfd, VtList, p0, pts=seq(0, 1, length.out=50)) {
-
-  # Vmat <- sapply(VtList, function(f) f(pts))
-  # res <- rieExp(mfd, p0, t(Vmat))
-
-  # res
-# }
-
-
-MakeRotMat <- function(p1, p2, tol=1e-10) {
-  d <- length(p1)
-  if (length(p1) != length(p2)) {
-    stop('dimensions of p1 and p2 must agree')
-  }
-  if (sum(abs(p1 - Normalize(p1))) > tol || 
-      sum(abs(p2 - Normalize(p2))) > tol) {
-    stop('p1 and p2 needs to be have norm 1')
-  }
-
-  if (sum(abs(p1 + p2)) < tol) {
-    warning('Rotation between podal points is arbitrary')
-  }
-
-  Sphere <- structure(1, class='Sphere')
-  psi <- as.numeric(distance(Sphere, matrix(p1), matrix(p2)))
-  p1t <- Normalize(Proj(p1, p2, rej=TRUE))
-  R <- diag(1, nrow=d) + 
-    sin(psi) * (tcrossprod(p2, p1t) - tcrossprod(p1t, p2)) + 
-    (cos(psi) - 1) * (tcrossprod(p2, p2) + tcrossprod(p1t, p1t))
-
-  R
-}
-
-
 ## Generate eigenfunctions V(t) from a certain basis around a mean curve.
 # mu needs to correspond to pts.
 MakephiS <- function(K, mu, pts=seq(0, 1, length.out=ncol(mu)), 
@@ -127,7 +44,7 @@ MakephiS <- function(K, mu, pts=seq(0, 1, length.out=ncol(mu)),
                         }))
   ptsSqueeze <- ptsSqueeze / max(ptsSqueeze)
   
-  phi1 <- rbind(fdapace:::CreateBasis(K, ptsSqueeze, type),
+  phi1 <- rbind(fdapace::CreateBasis(K, ptsSqueeze, type),
                 matrix(0, m, K)) / sqrt(p - 1) # at the north pole c(0, ..., 0, 1)
   phi1 <- array(phi1, c(m, p, K))
   dimnames(phi1) <- list(t=pts, j=seq_len(p), k=seq_len(K))
@@ -171,7 +88,7 @@ MakePhi.Sphere <-
                         }))
   ptsSqueeze <- ptsSqueeze / max(ptsSqueeze)
   
-  phi1 <- rbind(fdapace:::CreateBasis(K, ptsSqueeze, type),
+  phi1 <- rbind(fdapace::CreateBasis(K, ptsSqueeze, type),
                 matrix(0, m, K)) / sqrt(dimIntrinsic) # at the north pole c(0, ..., 0, 1)
   phi1 <- array(phi1, c(m, dimAmbient, K))
   dimnames(phi1) <- list(t=pts, j=seq_len(dimAmbient), k=seq_len(K))
@@ -198,7 +115,7 @@ MakePhi.SO <-
     stop('mu has to be a matrix')
   }
   dimAmbient <- nrow(mu)
-  dimTangent <- calcTanDim.SO(mfd, dimAmbient=dimAmbient)
+  dimTangent <- calcTanDim(mfd, dimAmbient=dimAmbient)
   dimMat <- round(sqrt(dimAmbient))
   if (dimAmbient <= 1) {
     stop('mu must have more than 1 rows')
@@ -217,7 +134,7 @@ MakePhi.SO <-
                         }))
   ptsSqueeze <- ptsSqueeze / max(ptsSqueeze)
   
-  phi <- array(fdapace:::CreateBasis(K, ptsSqueeze, type), c(m, dimTangent, K)) / 
+  phi <- array(fdapace::CreateBasis(K, ptsSqueeze, type), c(m, dimTangent, K)) / 
     sqrt(dimTangent)
 
   dimnames(phi) <- list(t=pts, j=seq_len(dimTangent), k=seq_len(K))
@@ -273,7 +190,7 @@ MakePhi.Euclidean <-
                         }))
   ptsSqueeze <- ptsSqueeze / max(ptsSqueeze)
   
-  phi1 <- fdapace:::CreateBasis(K, ptsSqueeze, type) / sqrt(dimAmbient)
+  phi1 <- fdapace::CreateBasis(K, ptsSqueeze, type) / sqrt(dimAmbient)
   phi1 <- array(phi1, c(m, dimAmbient, K))
   dimnames(phi1) <- list(t=pts, j=seq_len(dimAmbient), k=seq_len(K))
 
@@ -316,12 +233,12 @@ MakePhi.L2 <-
   ptst <- pts
 
   if (m == 1) { # Scalar case
-    phis <- fdapace:::CreateBasis(K, ptss, type)
+    phis <- fdapace::CreateBasis(K, ptss, type)
     phi <- array(phis, c(m, dimTangent, K))
   } else {
     Keach <- ceiling(sqrt(2 * K))
-    phis <- fdapace:::CreateBasis(Keach, ptss, type)
-    phit <- fdapace:::CreateBasis(Keach, ptst, type)
+    phis <- fdapace::CreateBasis(Keach, ptss, type)
+    phit <- fdapace::CreateBasis(Keach, ptst, type)
     phi <- array(NA, c(m, dimTangent, K))
     k <- 0
     j <- 0
@@ -374,12 +291,12 @@ MakePhi.HS <-
   # Js <- ceiling(K / Jt) + 1
 
   if (m == 1) { # Scalar case
-    phis <- fdapace:::CreateBasis(K + 1, ptss, type)
+    phis <- fdapace::CreateBasis(K + 1, ptss, type)
     phi <- array(phis[, -1], c(m, dimTangent, K))
   } else {
     Jt <- Js <- ceiling(sqrt(2 * K))
-    phis <- fdapace:::CreateBasis(Js, ptss, type)
-    phit <- fdapace:::CreateBasis(Jt, ptst, type)
+    phis <- fdapace::CreateBasis(Js, ptss, type)
+    phit <- fdapace::CreateBasis(Jt, ptst, type)
 
     # phi_1(t) phi1(s), phi_2(t) phi_1(s), phi_1(t) phi_2(s), etc
     matTRUE <- matrix(TRUE, Jt, Js) 
@@ -404,7 +321,7 @@ MakePhi.HS <-
   res <- sapply(seq_along(pts), function(i) {
     R <- MakeRotMat(basePt, Normalize(mu[, i]))
     res <- R %*% phi[i, , , drop=TRUE]
-    res1 <- projectTangent.HS(mfd, mu[, i], res)
+    res1 <- projectTangent(mfd, mu[, i], res)
     # if (mean(abs(res - res1)) > 1e-2) stop('Rot incorrect')
     # res2 <- projectTangent.HS(mfd, mu[, i], res[, 3])
     res1
@@ -440,8 +357,8 @@ MakePhi.HS <-
   # ptss <- seq(0, 1, length.out=dimTangent)
   # ptst <- pts
   # Keach <- ceiling(sqrt(2 * K))
-  # phis <- fdapace:::CreateBasis(Keach, ptss, type)
-  # phit <- fdapace:::CreateBasis(Keach, ptst, type)
+  # phis <- fdapace::CreateBasis(Keach, ptss, type)
+  # phit <- fdapace::CreateBasis(Keach, ptst, type)
   # phi <- array(NA, c(m, dimTangent, K))
 
   # matTRUE <- matrix(TRUE, Keach, Keach)
@@ -508,7 +425,7 @@ MakePhi <- function(mfd, K, mu, pts=seq(0, 1, length.out=ncol(mu)),
 #' @export
 MakeMfdProcess <- function(mfd, 
   n, mu, pts=seq(0, 1, length.out=ncol(mu)), K=2, lambda=rep(1, K), sigma2=0, 
-  xiFun = rnorm, epsFun = rnorm, epsBase = c('mu', 'X'), 
+  xiFun = stats::rnorm, epsFun = stats::rnorm, epsBase = c('mu', 'X'), 
   basisType=c('cos', 'sin', 'fourier', 'legendre01')) {
 
   epsBase <- match.arg(epsBase)
@@ -556,67 +473,6 @@ MakeMfdProcess <- function(mfd,
   res
 }
 
-
-
-## Generate process on a sphere by exponential maps
-# Return a three dimensional array X[i, j, t] = X_{ij}(t)
-# sigma2: The entriwise (isotropic) variance for added errors
-# xiFun: A function to generate xi. The first argument is the number of samples to generate.
-# epsFun: A function to generate noise, similar to xiFun.
-# epsBase: What is the base point p for adding noises. The noisy observations are Exp_p(eps), where p = 'mu' or 'X'
-MakeSphericalProcess <- function(
-  n, mu, pts=seq(0, 1, length.out=ncol(mu)), K=2, lambda=rep(1, K), sigma2=0, 
-  xiFun = rnorm, epsFun = rnorm, epsBase = c('mu', 'X'), 
-  basisType=c('cos', 'sin', 'fourier', 'legendre01')) {
-
-  epsBase <- match.arg(epsBase)
-  basisType <- match.arg(basisType)
-  p <- nrow(mu)
-  m <- length(pts)
-
-  # A function that generates iid centered and scaled random variables for scores
-  xi <- matrix(xiFun(n * K), n, K) %*% diag(sqrt(lambda), nrow = K)
-  phi <- matrix(MakephiS(K, mu, pts, basisType), ncol=K)
-  xiphi <- array(xi %*% t(phi), c(n, m, p))
-
-  mfd <- structure(1, class='Sphere')
-  X <- sapply(seq_len(m), function(tt) {
-    mu0 <- mu[, tt]
-    V <- matrix(xiphi[, tt, ], dim(xiphi)[1], dim(xiphi)[3])
-    t(rieExp(mfd, mu0, t(V)))
-  }, simplify='array')
-  dimnames(X) <- list(i = seq_len(n), j = seq_len(p), t = pts)
-
-  if (sigma2 > 1e-15) {
-    if (epsBase == 'mu') {
-      epsArray <- vapply(seq_len(m), function(tt) {
-        rot <- MakeRotMat(c(rep(0, p - 1), 1), mu[, tt])
-        eps <- cbind(matrix(epsFun(n * (p - 1)), n, p - 1), 0) %*% t(rot) * 
-          sqrt(sigma2)
-        eps
-      }, matrix(0, n, p))
-      xiphiN <- xiphi + aperm(epsArray, c(1, 3, 2))
-      XNoisy <- sapply(seq_len(m), function(tt) {
-        mu0 <- mu[, tt]
-        V <- matrix(xiphiN[, tt, ], dim(xiphiN)[1], dim(xiphiN)[3])
-        t(rieExp(mfd, mu0, t(V)))
-      }, simplify='array')
-    } else if (epsBase == 'X') {
-      XNoisy <- apply(X, c(1, 3), function(x) {
-        rot <- MakeRotMat(c(rep(0, p - 1), 1), x)
-        eps <- rot %*% matrix(c(epsFun(p - 1), 0) * sqrt(sigma2))
-        t(rieExp(mfd, x, eps))
-      })
-      XNoisy <- aperm(XNoisy, c(2, 1, 3))
-    }
-  } else {
-    XNoisy <- X
-  }
-
-
-  res <- list(XNoisy = XNoisy, X = X, T = pts, xi = xi, phi=phi)
-  res
-}
 
 
 #' Sparsify a dense Riemannian process
@@ -670,7 +526,7 @@ CFPCA <- function(Ly, Lt, optns=list()) {
   optns <- optns[names(optns) != 'KUse']
   resFPCA <- lapply(seq_len(p), function(j) {
     Ly <- lapply(Ly, `[`, j, )
-    res <- FPCA(Ly, Lt, optns)
+    res <- fdapace::FPCA(Ly, Lt, optns)
     res
   })
   if (is.null(KUse)) {
@@ -682,14 +538,14 @@ CFPCA <- function(Ly, Lt, optns=list()) {
   workGrid <- resFPCA[[1]]$workGrid
   obsGrid <- resFPCA[[1]]$obsGrid
   muEst <- t(vapply(resFPCA, function(res) {
-    muObs <- ConvertSupport(workGrid, obsGrid, res[['mu']])
+    muObs <- fdapace::ConvertSupport(workGrid, obsGrid, res[['mu']])
   }, obsGrid))
 
   xiFPCA <- do.call(cbind, lapply(resFPCA, `[[`, 'xiEst'))
   if (ncol(xiFPCA) < KUse) {
     stop('Cannot obtain KUse components')
   }
-  xiPCA <- prcomp(xiFPCA, center=FALSE)
+  xiPCA <- stats::prcomp(xiFPCA, center=FALSE)
   xiEst <- xiPCA[['x']][, seq_len(KUse), drop=FALSE] #%*% xiPCA[['rotation']][, seq_len(KUse), drop=FALSE]
   lam <- xiPCA[['sdev']][seq_len(KUse)]
 
@@ -904,79 +760,15 @@ ErrMu <- function(mfd, muTrue, muEst) {
 GetRVGenerator <- function(name='norm') {
 
   if (name == 'norm') {
-    rnorm
+    stats::rnorm
   } else if (name == 'exp') {
-    function(n) rexp(n) - 1
+    function(n) stats::rexp(n) - 1
   } else if (name == 't10') {
-    function(n) rt(n, df=10) * sqrt(8 / 10) 
+    function(n) stats::rt(n, df=10) * sqrt(8 / 10) 
   } else {
     stop(sprintf("'%s' random number generator not implemented", name))
   }
 
-}
-
-
-#' Helper function for simulations
-#' 
-#' Get the name of the settings from a named list
-#' @param settings A named list. The names correponding to the setting parameter names, and the values are the parameter values
-#' @param digits How many digits to use to format the numerical values
-#' @param tiny Which version of the setting name to produce
-#' @export
-GetSettingName <- function(settings, digits=3, display=c('short', 'pretty', 'tiny')) {
-
-  display <- match.arg(display)
-
-  if (is.null(names(settings))) {
-    stop("'settings' must be a named list")
-  }
-
-  formatType <- sapply(settings, function(x) {
-    if (is.list(x) && length(x) == 1) {
-      x <- unlist(x)
-    }
-
-    switch(class(x),
-      'character' = '%s', 
-      'numeric' = sprintf('%%.%dg', digits), 
-      'logical' = '%s', 
-      'integer' = '%d', 
-      stop('Not supported')
-      )
-  })
-  val <- sapply(settings, function(x) {
-    if (is.list(x) && length(x) == 1) {
-      x <- unlist(x)
-    }
-
-    switch(class(x),
-      'function' = stop('Not supported'), 
-      'factor' = stop('Not supported'), 
-      'integer' = round(mean(x)), 
-      x[1]
-      )
-  }, simplify=FALSE)
-
-  if (display == 'short') {
-    form <- paste(paste0(names(settings), formatType), collapse='_')
-  } else if (display == 'pretty') {
-    form <- paste(paste0(names(settings), '=', formatType), collapse=', ')
-  } else if (display == 'tiny') {
-    len <- 3
-    form <- paste(paste0(substr(names(settings), 1, len), formatType), 
-                  collapse='_')
-    val <- lapply(val, function(x) {
-                    if (is.character(x)) {
-                      substr(x, 1, len)
-                    } else {
-                      x
-                    }
-                  })
-  }
-
-
-  fn <- do.call(sprintf, c(list(form), val))
-  fn
 }
 
 
@@ -1014,7 +806,7 @@ MakephiSO <- function(K, mu, pts=seq(0, 1, length.out=nrow(mu)),
                         }))
   ptsSqueeze <- ptsSqueeze / max(ptsSqueeze)
   
-  phip0 <- array(fdapace:::CreateBasis(K, ptsSqueeze, type), c(m, p0, K)) / sqrt(p0)
+  phip0 <- array(fdapace::CreateBasis(K, ptsSqueeze, type), c(m, p0, K)) / sqrt(p0)
 
   phi <- sapply(seq_along(pts), function(i) {
                   mat <- matrix(phip0[i, , ], p0, K)
@@ -1058,32 +850,28 @@ ProjectObjectHS <- function(obj) {
   obj
 }
 
+MakeRotMat <- manifold:::MakeRotMat
+MakeSkewSym <- manifold:::MakeSkewSym
+isSkewSym <- manifold:::isSkewSym
 
-HSToRootDens <- function(x) {
 
-  p <- length(x)
+#' Create a mean function 
+#'
+#' Generate a mean function through the exponential map. Specify a basepoint \eqn{p_0} and \eqn{V_\mu(t)}. Then \eqn{\mu=\exp_{p}V_{\mu(t)}}
+#' @param mfd An object whose class specifies the manifold to use
+#' @param VtList A list of functions. The jth function takes a vector of time, and return the corresponding V(t) in the jth entry
+#' @param p0 The basepoint, which will be converted to a vector
+#' @param pts The time points to generate the mean function
+#' @export
+Makemu <- function(mfd, VtList, p0, pts=seq(0, 1, length.out=50)) {
 
-  if (all(x < 0)) {
-    warning('A negative function cannot be projected to a density. Return the uniform density instead')
-    x <- rep(sqrt(p - 1) / sqrt(p), p)
-  } else {
-    x[x < 0] <- 0
-    x <- x * sqrt((p - 1) / sum(x^2))
-  }
+  # UseMethod('Makemu', mfd)
+  p0 <- c(p0)
+  Vmat <- matrix(sapply(VtList, function(f) f(pts)), ncol=length(VtList))
+  res <- manifold::rieExp(mfd, p0, t(Vmat))
 
-  x
+  res
 }
 
 
-HSSampToDensities <- function(samp) {
 
-  # n <- dim(samp)[1]
-  # p <- dim(samp)[2]
-  # m <- dim(samp)[3]
-  dn <- dimnames(samp$X)
-  samp$X <- aperm(apply(samp$X, c(1, 3), HSToRootDens), c(2, 1, 3))
-  samp$XNoisy <- aperm(apply(samp$XNoisy, c(1, 3), HSToRootDens), c(2, 1, 3))
-  dimnames(samp$X) <- dimnames(samp$XNoisy) <- dn
-  samp
-
-}

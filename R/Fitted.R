@@ -30,6 +30,7 @@ Fitted <- function(mfd=structure(1, class='Sphere'), muM, xi, phiM, K) {
 #' @param object An `RFPCA` object
 #' @param K The number of components to apply. If missing, default to all components in `object`
 #' @param grid The grid where the output function should be supported on
+#' @param ... Not used
 #' @export
 #' @return A 3D array with entries corresponds to (i, j, t) supported on workGrid
 fitted.RFPCA <- function(object, K, grid=c('work', 'obs'), ...) {
