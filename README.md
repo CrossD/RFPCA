@@ -4,15 +4,21 @@ Riemannian Functional Principal Component Analysis
 This is the R package `RFPCA` implementing the sparse and dense
 Riemannian functional principal component analysis methods. C.f.
 
-  - Dai, X., & Müller, H. G. (2018). Principal component analysis for
-    functional data on riemannian manifolds and spheres. The Annals of
-    Statistics, 46(6B), 3334-3361.
-  - Dai, X., Lin, Z., & Müller, H. G. (2019). Modeling Longitudinal Data
-    on Riemannian Manifolds. [ArXiv](https://arxiv.org/abs/1812.04774)
+- Dai, X., & Müller, H. G. (2018). Principal component analysis for
+  functional data on riemannian manifolds and spheres. The Annals of
+  Statistics, 46(6B), 3334-3361.
+- Dai, X., Lin, Z., & Müller, H. G. (2019). Modeling Longitudinal Data
+  on Riemannian Manifolds. [ArXiv](https://arxiv.org/abs/1812.04774)
 
 ## Installation
 
-To install `RFPCA` from GitHub
+To install, first install its dependency `manifold` from CRAN
+
+``` r
+install.packages("manifold")
+```
+
+Then install `RFPCA` from GitHub
 
 ``` r
 devtools::install_github('CrossD/RFPCA')
@@ -70,23 +76,26 @@ resEu <- RFPCA(yList, tList,
                     error=TRUE))
 ```
 
-Plot the mean function
+Plot the mean function. Dotted curve stands for the true mean, dashed
+for the estimated mean function using the euclidean method, and solid
+for our intrinsic Riemannian method.
 
 ``` r
-# Dotted curve stands for the true mean, 
-# dashed for the estimated mean function using the euclidean method, 
-# and solid for our intrinsic Riemannian method.
 matplot(pts, t(mu), type='l', lty=3)
 matplot(pts, t(resEu$muObs), type='l', lty=2, add=TRUE)
 matplot(pts, t(resSp$muObs), type='l', lty=1, add=TRUE)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-Plot the principal components; up to 3 were well-estimated
+Plot the principal components; the first three were well-estimated
 
 ``` r
 plot(resSp$xi[, 3], samp$xi[, 3], xlab='estimated xi_3', ylab='true xi_3') 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+## Reproducing the analysis in Dai Lin Müller (2019)
+
+See `analysis/`

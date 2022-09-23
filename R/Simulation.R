@@ -70,7 +70,7 @@ MakePhi.Sphere <-
     stop('mu has to be a matrix')
   }
   dimAmbient <- nrow(mu)
-  dimIntrinsic <- calcIntDim.Sphere(mfd, dimAmbient=dimAmbient)
+  dimIntrinsic <- calcIntDim(mfd, dimAmbient=dimAmbient)
   if (dimAmbient <= 1) {
     stop('mu must have more than 1 rows')
   }

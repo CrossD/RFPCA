@@ -75,17 +75,21 @@ resEu <- RFPCA(yList, tList,
                     error=TRUE))
 ```
 
-Plot the mean function
+Plot the mean function. 
+Dotted curve stands for the true mean, 
+dashed for the estimated mean function using the euclidean method, 
+and solid for our intrinsic Riemannian method.
 ```{r}
-# Dotted curve stands for the true mean, 
-# dashed for the estimated mean function using the euclidean method, 
-# and solid for our intrinsic Riemannian method.
 matplot(pts, t(mu), type='l', lty=3)
 matplot(pts, t(resEu$muObs), type='l', lty=2, add=TRUE)
 matplot(pts, t(resSp$muObs), type='l', lty=1, add=TRUE)
 ```
 
-Plot the principal components; up to 3 were well-estimated 
+Plot the principal components; the first three were well-estimated 
 ```{r}
 plot(resSp$xi[, 3], samp$xi[, 3], xlab='estimated xi_3', ylab='true xi_3') 
 ```
+
+## Reproducing the analysis in Dai Lin Müller (2019)
+
+See `analysis/`

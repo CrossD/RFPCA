@@ -46,21 +46,21 @@ Supported classes includes: 'Sphere' (default), 'Euclidean', 'SO', 'HS', 'L2', '
 
 Available control options are 
 \describe{
-item{mfd}{A structure such as structure(1, class='CLASS'), where CLASS is one of the supported classes above. Takes precedence over mfdName. Default: structure(1, 'Sphere')}
-item{mfdName}{The name of a manifold. Supported values are 'Sphere', 'Euclidean', 'SO', 'HS', 'L2', 'Dens'. Default: 'Sphere'}
-item{dataType}{The type of design we have (usually distinguishing between sparse or dense functional data); 'Sparse', 'Dense', 'DenseWithMV', 'p>>n'. Default:  determine automatically based on 'IsRegular'}
-item{userBwMu}{The bandwidth for smoothing the mean function. Can be either a scalar specifying the bandwidth, or 'GCV' for generalized cross-validation. MUST BE SPECIFIED}
-item{userBwCov}{The bandwidth for smoothing the covariance function. Can be a scalar specifying the bandwidth. If userBwCov = 'GCV', then userBwCov will be set to twice the GCV-selected bandwidth for mu. MUST BE SPECIFIED}
-item{ToutRange}{Truncate the FPCA to be only within ToutRange. Default: c(-Inf, Inf)}
-item{npoly}{The degree of local polynomials for smoothing. Default: 1 (local linear)}
-item{nRegGrid}{The number of support points in each direction of covariance surface. Default: 51}
-item{kernel}{Smoothing kernel choice, common for mu and covariance; "rect", "gauss", "epan", "gausvar", "quar". Default: "gauss"; dense data are assumed noise-less so no smoothing is performed. }
-item{error}{Assume measurement error in the dataset. The error is assumed to be isometric on the tangent space. Default: TRUE}
-item{maxK}{The maximum number of principal components to consider. Default: Inf if the smoothing method is used, and 30 for cross-sectional estimate}
-item{userSigma2}{The user-defined measurement error variance. A positive scalar. Default: `NULL`}
-item{methodMuCovEst}{The method to estimate the mean and covariance in the case of dense functional data; 'cross-sectional', 'smooth'. Default: 'cross-sectional'}
-item{methodXi}{The method to estimate the PC scores; 'CE' (Condit. Expectation), 'IN' (Numerical Integration). Default: 'CE' for sparse data and dense data with missing values, 'IN' for dense data.}
-item{obsGridOnly}{If TRUE, then assume the observation grids are regular, and use it as the regGrid/workGrid. This may speed up the grid convertion and eigendecomposition if length(obsGrid) is small. Default: TRUE if the Lt are regular and length(obsGrid) <= nRegGrid, and FALSE otherwise.}
+\item{mfd}{A structure such as structure(1, class='CLASS'), where CLASS is one of the supported classes above. Takes precedence over mfdName. Default: structure(1, 'Sphere')}
+\item{mfdName}{The name of a manifold. Supported values are 'Sphere', 'Euclidean', 'SO', 'HS', 'L2', 'Dens'. Default: 'Sphere'}
+\item{dataType}{The type of design we have (usually distinguishing between sparse or dense functional data); 'Sparse', 'Dense', 'DenseWithMV', 'p>>n'. Default:  determine automatically based on 'IsRegular'}
+\item{userBwMu}{The bandwidth for smoothing the mean function. Can be either a scalar specifying the bandwidth, or 'GCV' for generalized cross-validation. MUST BE SPECIFIED}
+\item{userBwCov}{The bandwidth for smoothing the covariance function. Can be a scalar specifying the bandwidth. If userBwCov = 'GCV', then userBwCov will be set to twice the GCV-selected bandwidth for mu. MUST BE SPECIFIED}
+\item{ToutRange}{Truncate the FPCA to be only within ToutRange. Default: c(-Inf, Inf)}
+\item{npoly}{The degree of local polynomials for smoothing. Default: 1 (local linear)}
+\item{nRegGrid}{The number of support points in each direction of covariance surface. Default: 51}
+\item{kernel}{Smoothing kernel choice, common for mu and covariance; "rect", "gauss", "epan", "gausvar", "quar". Default: "gauss"; dense data are assumed noise-less so no smoothing is performed. }
+\item{error}{Assume measurement error in the dataset. The error is assumed to be isometric on the tangent space. Default: TRUE}
+\item{maxK}{The maximum number of principal components to consider. Default: Inf if the smoothing method is used, and 30 for cross-sectional estimate}
+\item{userSigma2}{The user-defined measurement error variance. A positive scalar. Default: `NULL`}
+\item{methodMuCovEst}{The method to estimate the mean and covariance in the case of dense functional data; 'cross-sectional', 'smooth'. Default: 'cross-sectional'}
+\item{methodXi}{The method to estimate the PC scores; 'CE' (Condit. Expectation), 'IN' (Numerical Integration). Default: 'CE' for sparse data and dense data with missing values, 'IN' for dense data.}
+\item{obsGridOnly}{If TRUE, then assume the observation grids are regular, and use it as the regGrid/workGrid. This may speed up the grid convertion and eigendecomposition if length(obsGrid) is small. Default: TRUE if the Lt are regular and length(obsGrid) <= nRegGrid, and FALSE otherwise.}
 }
 
 References: 

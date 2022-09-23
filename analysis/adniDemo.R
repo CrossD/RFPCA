@@ -47,6 +47,10 @@ dir.create(figpath, showWarnings=FALSE, recursive=TRUE)
 # ageDat contains subject ID (subjectId), Alzheimer's disease status (researchGroup), number of observations per subject (n), age at the first visit (age0), and time since the first visit (newage) which we use as the time-axis.
 # spdUse contains the SPD connectivity correlation matrices at each visit, organized in the long format. The columns are subject ID (subjectId), time since the first visit (newage), region 1 (i1), region (2), and the correlation values (value). 
 load(file='adniDat.RData')
+ageDat <- ageDat %>%
+  mutate(subjectId = as.character(subjectId))
+spdUse <- spdUse %>%
+  mutate(subjectId = as.character(subjectId))
 
 # Information at the first visit
 ageDat0 <- ageDat %>% group_by(subjectId) %>% filter(row_number() == 1) %>% ungroup
@@ -61,7 +65,7 @@ Lt <- lapply(fpcaInput$Lt, round, digits=2)
 # Requires around 4 minutes to finish on a 2018 macbook pro
 print(system.time({
   resMani <- RFPCA(logLy, Lt, 
-                   list(mfdName=mfdName, 
+                   list(mfd=mfd, 
                         userBwMu=bwMu, 
                         userBwCov=bwCov, 
                         kernel=kern, 
@@ -125,8 +129,9 @@ fittedObs <- fitted(resMani, grid='obs') %>%
   reshape2::melt() %>% 
   separate('j', c('i1', 'i2'), sep='_') %>% 
   rename(newage = t, subjectId = i) %>%
-  group_by(newage, subjectId) %>% 
-  mutate(fitted=cov2cor(matrix(value, d, d))) %>% 
+  mutate(subjectId = as.character(subjectId)) %>% 
+  group_by(newage, subjectId) %>%
+  mutate(fitted=c(cov2cor(matrix(value, d, d)))) %>% 
   ungroup %>%
   select(-value)
 
